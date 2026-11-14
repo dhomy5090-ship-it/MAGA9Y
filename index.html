@@ -174,7 +174,7 @@
     <header class="sticky top-0 z-30 glass-card border-b border-slate-800/80 px-3 sm:px-6 py-2.5 sm:py-3">
       <div class="max-w-7xl mx-auto space-y-2.5">
         <!-- Row 1: Clear App Logo + Title + Version on Right | Quick Action Buttons on Left -->
-        <div class="flex items-center justify-between gap-2">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 sm:gap-2">
           <!-- Brand Logo & Title -->
           <div class="flex items-center gap-2.5 min-w-0">
             <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-900/40 shrink-0">
@@ -190,20 +190,20 @@
           </div>
 
           <!-- Action Buttons (Compact & Uniform on Mobile, Labeled on PC) -->
-          <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            <button type="button" id="pwaInstallBtn" onclick="triggerPwaInstall()" class="h-9 px-2.5 sm:px-3 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 border border-sky-500/30 text-xs font-extrabold flex items-center justify-center gap-1.5 transition" title="تثبيت التطبيق على الجوال بدون حواف">
+          <div class="grid grid-cols-4 sm:flex items-center gap-2 sm:gap-2 w-full sm:w-auto sm:shrink-0">
+            <button type="button" id="pwaInstallBtn" onclick="triggerPwaInstall()" class="h-10 sm:h-9 w-full sm:w-auto px-2.5 sm:px-3 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 border border-sky-500/30 text-xs font-extrabold flex items-center justify-center gap-1.5 transition" title="تثبيت التطبيق على الجوال بدون حواف">
               <i data-lucide="smartphone" class="w-4 h-4 shrink-0"></i>
               <span class="hidden lg:inline">تثبيت بالجوال</span>
             </button>
-            <button type="button" onclick="openQuickScanModal()" class="h-9 px-2.5 sm:px-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-extrabold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-950/50 transition" title="مسح باركود سريع">
+            <button type="button" onclick="openQuickScanModal()" class="h-10 sm:h-9 w-full sm:w-auto px-2.5 sm:px-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-extrabold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-950/50 transition" title="مسح باركود سريع">
               <i data-lucide="scan-barcode" class="w-4 h-4 shrink-0"></i>
               <span class="hidden sm:inline">مسح باركود سريع</span>
             </button>
-            <button type="button" onclick="openItemModal()" class="h-9 px-2.5 sm:px-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold text-xs sm:text-sm flex items-center justify-center gap-1 border border-slate-700 transition" title="إضافة صنف">
+            <button type="button" onclick="openItemModal()" class="h-10 sm:h-9 w-full sm:w-auto px-2.5 sm:px-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold text-xs sm:text-sm flex items-center justify-center gap-1 border border-slate-700 transition" title="إضافة صنف">
               <i data-lucide="plus" class="w-4 h-4 text-emerald-400 shrink-0"></i>
               <span class="hidden sm:inline">إضافة صنف</span>
             </button>
-            <button type="button" onclick="openZeroResetModal()" class="h-9 px-2.5 sm:px-3 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 text-xs font-bold flex items-center justify-center gap-1 transition" title="تصفير المخزون بالكامل">
+            <button type="button" onclick="openZeroResetModal()" class="h-10 sm:h-9 w-full sm:w-auto px-2.5 sm:px-3 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 text-xs font-bold flex items-center justify-center gap-1 transition" title="تصفير المخزون بالكامل">
               <i data-lucide="rotate-ccw" class="w-4 h-4 shrink-0"></i>
               <span class="hidden lg:inline">تصفير الكل</span>
             </button>
@@ -1819,26 +1819,43 @@
       const aiVisionBtn = document.getElementById('aiVisionFrameBtn');
       showCameraNotice('');
 
+      const inIframe = (function () { try { return window.self !== window.top; } catch (e) { return true; } })();
+      if (inIframe) {
+        showCameraNotice('التطبيق مفتوح داخل إطار (iframe) والمتصفح يمنع الكاميرا داخل الإطارات. افتح الرابط مباشرة في تبويب مستقل في المتصفح (Chrome أو Safari).');
+        showToast('افتح التطبيق مباشرة وليس داخل إطار');
+        return;
+      }
+
       if (!window.isSecureContext) {
-        showCameraNotice('لأسباب أمنية في المتصفح، الكاميرا المباشرة تعمل فقط على رابط HTTPS. افتح التطبيق عبر استضافة HTTPS (مثل GitHub Pages) وستعمل الكاميرا فوراً.');
-        showToast('الكاميرا المباشرة تتطلب رابط HTTPS');
+        showCameraNotice('الكاميرا تعمل فقط على رابط يبدأ بـ https://. الرابط الحالي: ' + location.protocol + '//' + location.host + ' — افتح رابط GitHub Pages الذي يبدأ بـ https.');
+        showToast('الكاميرا تتطلب رابط HTTPS');
         return;
       }
 
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        showCameraNotice('نافذة المعاينة الحالية تحجب صلاحية الكاميرا المباشرة. عند فتح التطبيق في متصفح جوالك على رابط HTTPS ستعمل الكاميرا فوراً.');
+        showCameraNotice('هذا المتصفح لا يدعم الكاميرا. إذا كنت تفتح الرابط من داخل تطبيق (واتساب، تيليجرام، سناب، تويتر...) فانسخ الرابط وافتحه في Chrome أو Safari مباشرة.');
         return;
       }
 
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: { ideal: 'environment' },
-            width: { ideal: 1920 },
-            height: { ideal: 1080 }
-          },
-          audio: false
-        });
+        let stream = null;
+        const attempts = [
+          { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false },
+          { video: { facingMode: { ideal: 'environment' } }, audio: false },
+          { video: true, audio: false }
+        ];
+        let lastErr = null;
+        for (const constraints of attempts) {
+          try {
+            stream = await navigator.mediaDevices.getUserMedia(constraints);
+            break;
+          } catch (e) {
+            lastErr = e;
+            // Permission problems won't be fixed by relaxing constraints
+            if (e && (e.name === 'NotAllowedError' || e.name === 'SecurityError' || e.name === 'NotReadableError')) break;
+          }
+        }
+        if (!stream) throw lastErr || new Error('NoStream');
         nativeVideoStream = stream;
         isCameraActive = true;
 
@@ -1870,7 +1887,7 @@
           videoEl.srcObject = stream;
           videoEl.setAttribute('playsinline', 'true');
           videoEl.classList.remove('hidden');
-          await videoEl.play();
+          try { await videoEl.play(); } catch (e) { /* autoplay handled by muted+playsinline */ }
         }
 
         // High-speed dual engine: Native BarcodeDetector + ZXing TRY_HARDER on cropped center region (reads paper & screen barcodes in <150ms)
@@ -1932,9 +1949,23 @@
           } catch (e) {}
         }, 140);
       } catch (err) {
+        console.error('Camera error:', err);
         stopCameraScanner();
-        showCameraNotice('تعذر تشغيل الكاميرا داخل نافذة المعاينة الحالية لأن النظام يمنع الوصول للكاميرا في وضع المعاينة. عند تشغيل التطبيق مباشرة في متصفح جوالك عبر HTTPS ستفتح الكاميرا وتقرأ الباركود تلقائياً مثل أجهزة المتاجر.');
-        showToast('تعذر فتح الكاميرا في نافذة المعاينة');
+        const name = (err && err.name) || 'UnknownError';
+        let msg;
+        if (name === 'NotAllowedError' || name === 'PermissionDeniedError' || name === 'SecurityError') {
+          msg = 'تم رفض صلاحية الكاميرا. افتح إعدادات المتصفح للموقع (أيقونة القفل بجانب الرابط ← الأذونات ← الكاميرا ← سماح). وإذا كنت مثبّت التطبيق على الشاشة الرئيسية فتأكد أيضاً من إعدادات الجوال ← التطبيقات ← المتصفح ← الأذونات ← الكاميرا.';
+        } else if (name === 'NotFoundError' || name === 'DevicesNotFoundError') {
+          msg = 'لم يتم العثور على كاميرا في هذا الجهاز.';
+        } else if (name === 'NotReadableError' || name === 'TrackStartError') {
+          msg = 'الكاميرا مستخدمة من تطبيق آخر. أغلق أي تطبيق يستخدم الكاميرا (أو تبويب آخر) ثم حاول مرة ثانية.';
+        } else if (name === 'OverconstrainedError') {
+          msg = 'إعدادات الكاميرا المطلوبة غير مدعومة في هذا الجهاز.';
+        } else {
+          msg = 'تعذر تشغيل الكاميرا.';
+        }
+        showCameraNotice(msg + ' [رمز الخطأ: ' + name + ']');
+        showToast('تعذر فتح الكاميرا');
       }
     }
 
