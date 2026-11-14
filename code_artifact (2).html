@@ -1,0 +1,2234 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#090d16" />
+  <title>مقاضينا | نظام إدارة مخزون البيت والباركود الذكي</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    * {
+      font-family: 'Tajawal', sans-serif;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    html {
+      height: auto;
+      overflow-y: auto !important;
+      -webkit-overflow-scrolling: touch;
+      scroll-behavior: smooth;
+    }
+    body {
+      background: radial-gradient(circle at top right, #0f172a 0%, #090d16 55%, #050811 100%);
+      color: #f8fafc;
+      min-height: 100vh;
+      height: auto;
+      overflow-y: auto !important;
+      overflow-x: clip;
+      -webkit-overflow-scrolling: touch;
+      touch-action: pan-y manipulation;
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+    }
+    @media (min-width: 768px) {
+      body {
+        padding-bottom: 40px;
+      }
+    }
+    .glass-card {
+      background: rgba(30, 41, 59, 0.65);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glass-modal {
+      background: rgba(15, 23, 42, 0.96);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    .scanner-laser {
+      position: absolute;
+      left: 8%;
+      right: 8%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #10b981, #34d399, #10b981, transparent);
+      box-shadow: 0 0 12px #10b981;
+      animation: scanMove 2.2s infinite ease-in-out;
+    }
+    @keyframes scanMove {
+      0%, 100% { top: 15%; }
+      50% { top: 85%; }
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      height: 4px;
+      width: 5px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.4);
+      border-radius: 9999px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(100, 116, 139, 0.5);
+      border-radius: 9999px;
+    }
+    .barcode-bars {
+      background-image: repeating-linear-gradient(
+        90deg,
+        #0f172a 0px,
+        #0f172a 2px,
+        transparent 2px,
+        transparent 4px,
+        #0f172a 4px,
+        #0f172a 5px,
+        transparent 5px,
+        transparent 8px,
+        #0f172a 8px,
+        #0f172a 11px,
+        transparent 11px,
+        transparent 13px
+      );
+    }
+    .safe-bottom-nav {
+      padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+    }
+  </style>
+</head>
+<body>
+  <div id="appShell" class="w-full">
+    <!-- Responsive Top Header (Scroll-friendly on Mobile & PC) -->
+    <header class="sticky top-0 z-30 glass-card border-b border-slate-800/80 px-3 sm:px-6 py-2.5 sm:py-3">
+      <div class="max-w-7xl mx-auto flex flex-col gap-2">
+        <div class="flex items-center justify-between gap-2 sm:gap-4">
+          <!-- Brand Logo & Title -->
+          <div class="flex items-center gap-2.5 min-w-0">
+            <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-900/40 shrink-0">
+              <i data-lucide="scan-barcode" class="w-5 h-5 sm:w-6 sm:h-6 text-white"></i>
+            </div>
+            <div class="truncate">
+              <div class="flex items-center gap-1.5">
+                <h1 class="text-sm sm:text-xl font-extrabold tracking-tight text-white truncate">مقاضينا الذكي</h1>
+                <span class="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-bold shrink-0">بالباركود</span>
+                <span id="appVersionBadge" class="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-300 border border-sky-500/30 font-mono font-extrabold shrink-0">V1.0</span>
+              </div>
+              <p class="text-[10px] sm:text-xs text-slate-400 truncate">إدارة مخزون البيت وقائمة الطلبات</p>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <button type="button" onclick="openQuickScanModal()" class="px-2.5 sm:px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-extrabold text-xs sm:text-sm flex items-center gap-1 shadow-lg shadow-emerald-950/50 transition">
+              <i data-lucide="scan" class="w-4 h-4"></i>
+              <span>مسح باركود سريع</span>
+            </button>
+            <button type="button" onclick="openItemModal()" class="px-2.5 sm:px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold text-xs sm:text-sm flex items-center gap-1 border border-slate-700 transition">
+              <i data-lucide="plus" class="w-4 h-4 text-emerald-400"></i>
+              <span>إضافة صنف</span>
+            </button>
+            <button type="button" onclick="openZeroResetModal()" class="p-2 sm:px-3 sm:py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 text-xs font-bold flex items-center gap-1 transition" title="تصفير المخزون بالكامل">
+              <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+              <span class="hidden lg:inline">تصفير الكل</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Unified Navigation Bar (5 dedicated pages) -->
+        <nav class="grid grid-cols-5 gap-1 sm:flex sm:items-center sm:justify-center sm:gap-2 bg-slate-900/95 p-1 rounded-2xl border border-slate-800">
+          <button type="button" id="tabBtn-home" onclick="switchMainTab('home')" class="px-1.5 sm:px-3.5 py-2 rounded-xl text-[10px] sm:text-xs lg:text-sm font-bold transition-all flex items-center justify-center gap-1 sm:gap-1.5 bg-emerald-600 text-white shadow">
+            <i data-lucide="home" class="w-4 h-4 shrink-0"></i>
+            <span>الرئيسية</span>
+          </button>
+          <button type="button" id="tabBtn-inventory" onclick="switchMainTab('inventory')" class="px-1.5 sm:px-3.5 py-2 rounded-xl text-[10px] sm:text-xs lg:text-sm font-bold transition-all flex items-center justify-center gap-1 sm:gap-1.5 text-slate-300 hover:text-white">
+            <i data-lucide="package" class="w-4 h-4 shrink-0"></i>
+            <span>مخزون البيت</span>
+          </button>
+          <button type="button" id="tabBtn-scanner" onclick="switchMainTab('scanner')" class="px-1.5 sm:px-3.5 py-2 rounded-xl text-[10px] sm:text-xs lg:text-sm font-bold transition-all flex items-center justify-center gap-1 sm:gap-1.5 text-slate-300 hover:text-white">
+            <i data-lucide="scan-line" class="w-4 h-4 shrink-0"></i>
+            <span>ماسح الباركود</span>
+          </button>
+          <button type="button" id="tabBtn-shopping" onclick="switchMainTab('shopping')" class="px-1.5 sm:px-3.5 py-2 rounded-xl text-[10px] sm:text-xs lg:text-sm font-bold transition-all flex items-center justify-center gap-1 sm:gap-1.5 text-slate-300 hover:text-white relative">
+            <i data-lucide="shopping-cart" class="w-4 h-4 shrink-0"></i>
+            <span>قائمة المقاضي</span>
+            <span id="shoppingBadgeCount" class="px-1.5 py-0.2 bg-amber-500 text-slate-950 rounded-full text-[10px] font-extrabold">0</span>
+          </button>
+          <button type="button" id="tabBtn-labels" onclick="switchMainTab('labels')" class="px-1.5 sm:px-3.5 py-2 rounded-xl text-[10px] sm:text-xs lg:text-sm font-bold transition-all flex items-center justify-center gap-1 sm:gap-1.5 text-slate-300 hover:text-white">
+            <i data-lucide="qr-code" class="w-4 h-4 shrink-0"></i>
+            <span>باركود الأصناف</span>
+          </button>
+        </nav>
+      </div>
+    </header>
+
+    <main class="max-w-7xl w-full mx-auto px-3 sm:px-6 pt-3 sm:pt-5 space-y-4 sm:space-y-6 flex-1">
+      <!-- TAB 0: HOME DASHBOARD (ONLY the 4 summary cards) -->
+      <section id="view-home" class="space-y-4 sm:space-y-5">
+        <div class="glass-card rounded-2xl p-4 sm:p-5 flex items-center justify-between gap-3">
+          <div>
+            <h2 class="text-base sm:text-lg font-extrabold text-white">ملخص مخزون البيت</h2>
+            <p class="text-xs text-slate-400 mt-0.5">اضغط على أي بطاقة للانتقال مباشرة إلى تفاصيلها</p>
+          </div>
+          <button type="button" onclick="switchMainTab('scanner')" class="px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs flex items-center gap-1.5 shrink-0 transition">
+            <i data-lucide="scan-line" class="w-4 h-4"></i>
+            <span>فتح الماسح</span>
+          </button>
+        </div>
+
+        <!-- The 4 Summary Cards (Exclusive to Home Page) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <button type="button" onclick="openCategoryBox('all', 'all');" class="text-right glass-card hover:border-emerald-500/40 rounded-2xl p-4 sm:p-5 flex items-center justify-between transition">
+            <div>
+              <p class="text-xs sm:text-sm text-slate-400 font-bold">إجمالي الأصناف بالبيت</p>
+              <p id="statTotalItems" class="text-3xl font-black text-white mt-1.5">0</p>
+              <p class="text-[11px] text-emerald-400 mt-1">عرض كل المخزون ←</p>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+              <i data-lucide="boxes" class="w-6 h-6"></i>
+            </div>
+          </button>
+
+          <button type="button" onclick="openCategoryBox('all', 'ok');" class="text-right glass-card hover:border-teal-500/40 rounded-2xl p-4 sm:p-5 flex items-center justify-between transition">
+            <div>
+              <p class="text-xs sm:text-sm text-slate-400 font-bold">مخزون مكتمل ومتوفر</p>
+              <p id="statAvailableItems" class="text-3xl font-black text-emerald-400 mt-1.5">0</p>
+              <p class="text-[11px] text-slate-400 mt-1">فوق الحد الأدنى ←</p>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-teal-500/15 border border-teal-500/30 flex items-center justify-center text-teal-400 shrink-0">
+              <i data-lucide="check-circle-2" class="w-6 h-6"></i>
+            </div>
+          </button>
+
+          <button type="button" onclick="openCategoryBox('all', 'low');" class="text-right glass-card hover:border-amber-500/40 rounded-2xl p-4 sm:p-5 flex items-center justify-between transition">
+            <div>
+              <p class="text-xs sm:text-sm text-slate-400 font-bold">قارب على النفاد / ناقص</p>
+              <p id="statLowItems" class="text-3xl font-black text-amber-400 mt-1.5">0</p>
+              <p class="text-[11px] text-amber-300/80 mt-1">يحتاج إعادة تعبئة ←</p>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+              <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+            </div>
+          </button>
+
+          <button type="button" onclick="switchMainTab('shopping')" class="text-right glass-card hover:border-sky-500/40 rounded-2xl p-4 sm:p-5 flex items-center justify-between transition">
+            <div>
+              <p class="text-xs sm:text-sm text-slate-400 font-bold">قائمة المقاضي المطلوبة</p>
+              <p id="statShoppingCount" class="text-3xl font-black text-sky-400 mt-1.5">0</p>
+              <p class="text-[11px] text-sky-300/80 mt-1">الذهاب لقائمة المقاضي ←</p>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-sky-500/15 border border-sky-500/30 flex items-center justify-center text-sky-400 shrink-0">
+              <i data-lucide="shopping-bag" class="w-6 h-6"></i>
+            </div>
+          </button>
+        </div>
+      </section>
+
+      <!-- TAB 1: INVENTORY VIEW (Category Boxes Grid -> Opens Category Items List) -->
+      <section id="view-inventory" class="hidden space-y-4">
+        <!-- State A: Category Boxes Grid -->
+        <div id="inventoryCategoriesGridView" class="space-y-4">
+          <div class="glass-card rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h2 class="text-base sm:text-lg font-extrabold text-white">تصنيفات مخزون البيت</h2>
+              <p class="text-xs text-slate-400 mt-0.5">اختر أي تصنيف لعرض أصنافه، مراجعة الكميات، أو تعديلها</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="autoSyncLowStockToShopping()" class="px-3 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 text-xs font-bold flex items-center gap-1.5 transition">
+                <i data-lucide="list-plus" class="w-4 h-4"></i>
+                <span>تحويل النواقص لقائمة المقاضي</span>
+              </button>
+              <button type="button" onclick="openItemModal()" class="px-3 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-extrabold flex items-center gap-1 transition">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                <span>صنف جديد</span>
+              </button>
+            </div>
+          </div>
+
+          <div id="categoryBoxesGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4"></div>
+        </div>
+
+        <!-- State B: Opened Category Items List -->
+        <div id="inventoryItemsListView" class="hidden space-y-4">
+          <div class="glass-card rounded-2xl p-3.5 sm:p-4 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-2.5">
+              <button type="button" onclick="closeCategoryBox()" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-extrabold flex items-center gap-1.5 border border-slate-700 transition">
+                <i data-lucide="arrow-right" class="w-4 h-4 text-emerald-400"></i>
+                <span>التصنيفات</span>
+              </button>
+              <div>
+                <h2 id="openedCategoryTitle" class="text-sm sm:text-base font-extrabold text-white">كل المقاضي</h2>
+                <p id="openedCategorySubtitle" class="text-[11px] text-slate-400"></p>
+              </div>
+            </div>
+            <button type="button" onclick="openItemModal()" class="px-3 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-extrabold flex items-center gap-1 transition">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              <span>إضافة هنا</span>
+            </button>
+          </div>
+
+          <!-- Search & Status Filter inside opened category -->
+          <div class="glass-card rounded-2xl p-3 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+            <div class="relative flex-1">
+              <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2"></i>
+              <input
+                id="inventorySearchInput"
+                type="text"
+                oninput="handleSearchChange(this.value)"
+                placeholder="ابحث داخل القائمة بالاسم أو الباركود..."
+                class="w-full bg-slate-900/90 border border-slate-700/80 focus:border-emerald-500 rounded-xl pr-10 pl-3 py-2.5 text-xs sm:text-sm text-white placeholder-slate-400 outline-none transition"
+              />
+            </div>
+
+            <div class="flex items-center gap-2">
+              <select id="stockStatusFilter" onchange="handleStatusFilterChange(this.value)" class="flex-1 sm:flex-none bg-slate-900/90 border border-slate-700/80 rounded-xl px-3 py-2.5 text-xs sm:text-sm text-slate-200 outline-none focus:border-emerald-500">
+                <option value="all">جميع الحالات</option>
+                <option value="ok">متوفر بكفاية</option>
+                <option value="low">قارب على النفاد</option>
+                <option value="out">نفد تماماً (0)</option>
+              </select>
+
+              <button type="button" onclick="resetFilters()" class="px-3 py-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-xs text-slate-300 font-bold border border-slate-700 transition shrink-0">
+                إعادة ضبط
+              </button>
+            </div>
+          </div>
+
+          <div id="inventoryGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4"></div>
+        </div>
+      </section>
+
+      <!-- TAB 2: BARCODE SCANNER STUDIO -->
+      <section id="view-scanner" class="hidden space-y-4 sm:space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5">
+          <!-- Scanner Input & Camera -->
+          <div class="lg:col-span-5 space-y-4">
+            <div class="glass-card rounded-2xl p-4 sm:p-5 space-y-4">
+              <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                    <i data-lucide="camera" class="w-5 h-5"></i>
+                  </div>
+                  <div>
+                    <h2 class="text-sm sm:text-base font-extrabold text-white">ماسح الباركود المباشر</h2>
+                    <p class="text-[11px] sm:text-xs text-slate-400">قراءة مباشرة وفورية للباركود مثل المتاجر</p>
+                  </div>
+                </div>
+                <button type="button" id="cameraToggleBtn" onclick="toggleCameraScanner()" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 transition shrink-0">
+                  <i data-lucide="video" class="w-3.5 h-3.5"></i>
+                  <span>تشغيل الكاميرا</span>
+                </button>
+              </div>
+
+              <!-- Live Supermarket-Style Camera Scanner Box -->
+              <div class="relative rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 min-h-[240px] flex flex-col items-center justify-center">
+                <video id="nativeBarcodeVideo" playsinline muted autoplay class="hidden w-full h-64 object-cover"></video>
+                <div id="liveScannerOverlay" class="hidden absolute inset-0 pointer-events-none flex items-center justify-center">
+                  <div class="w-4/5 h-28 border-2 border-emerald-400/80 rounded-2xl relative shadow-[0_0_0_9999px_rgba(2,6,23,0.45)]">
+                    <div class="scanner-laser"></div>
+                    <span class="absolute -bottom-6 inset-x-0 text-center text-[11px] font-bold text-emerald-300 drop-shadow">ضع خطوط الباركود داخل الإطار للقراءة التلقائية</span>
+                  </div>
+                </div>
+                <button type="button" id="torchToggleBtn" onclick="toggleCameraTorch()" class="hidden absolute top-3 left-3 z-10 px-2.5 py-1.5 rounded-xl bg-slate-900/80 border border-slate-700 text-amber-300 text-xs font-bold flex items-center gap-1">
+                  <i data-lucide="flashlight" class="w-3.5 h-3.5"></i>
+                  <span>فلاش</span>
+                </button>
+                <div id="cameraPlaceholder" class="p-5 text-center space-y-2 relative w-full h-56 flex flex-col items-center justify-center">
+                  <div class="scanner-laser"></div>
+                  <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-slate-900 border border-slate-700 flex items-center justify-center text-emerald-400 mx-auto">
+                    <i data-lucide="scan-barcode" class="w-7 h-7 sm:w-8 sm:h-8"></i>
+                  </div>
+                  <p class="text-xs sm:text-sm font-bold text-slate-200">ماسح الباركود المباشر (مثل المتاجر)</p>
+                  <p class="text-[11px] sm:text-xs text-slate-400 max-w-xs">اضغط "تشغيل الكاميرا" ووجّه الجوال نحو الباركود ليقرأ الأرقام والخطوط تلقائياً بدون تصوير</p>
+                </div>
+              </div>
+              <div id="cameraStatusNotice" class="hidden text-[11px] text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded-xl p-2.5 leading-relaxed"></div>
+
+              <!-- Manual / USB Barcode Input -->
+              <div class="space-y-2">
+                <label for="manualBarcodeInput" class="block text-xs font-bold text-slate-300">رقم الباركود:</label>
+                <div class="flex gap-2">
+                  <input
+                    id="manualBarcodeInput"
+                    type="text"
+                     inputmode="numeric"
+                    onkeydown="if(event.key==='Enter'){triggerBarcodeScan(this.value);}"
+                    placeholder="امسح أو اكتب رقم الباركود هنا..."
+                    class="flex-1 bg-slate-900 border border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2.5 text-sm text-white font-mono outline-none"
+                  />
+                  <button type="button" onclick="triggerBarcodeScan(document.getElementById('manualBarcodeInput').value)" class="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs sm:text-sm transition shrink-0">
+                    مسح الآن
+                  </button>
+                </div>
+              </div>
+
+              <!-- Scan Action Mode Selector -->
+              <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800 space-y-2">
+                <p class="text-xs font-bold text-slate-300">الإجراء عند المسح:</p>
+                <div class="grid grid-cols-3 gap-1.5 sm:gap-2">
+                  <button type="button" id="scanMode-add" onclick="setScanActionMode('add')" class="py-2 px-2 rounded-lg text-[11px] sm:text-xs font-bold bg-emerald-600 text-white border border-emerald-500 transition">
+                    + إضافة للمخزون
+                  </button>
+                  <button type="button" id="scanMode-consume" onclick="setScanActionMode('consume')" class="py-2 px-2 rounded-lg text-[11px] sm:text-xs font-bold bg-slate-800 text-slate-300 border border-slate-700 transition">
+                    - سحب واستهلاك
+                  </button>
+                  <button type="button" id="scanMode-shop" onclick="setScanActionMode('shop')" class="py-2 px-2 rounded-lg text-[11px] sm:text-xs font-bold bg-slate-800 text-slate-300 border border-slate-700 transition">
+                    + لقائمة المقاضي
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Active Scanned Item Action Panel -->
+            <div id="scannedItemResultBox" class="glass-card rounded-2xl p-4 sm:p-5 border-2 border-emerald-500/40 space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">نتيجة المسح الفوري</span>
+                <span id="scannedBarcodeLabel" class="text-xs font-mono text-slate-400">في انتظار المسح</span>
+              </div>
+              <div id="scannedItemDynamicContent" class="text-center py-5 text-slate-400 text-xs sm:text-sm">
+                امسح أي باركود بالكاميرا أو اكتب رقمه بالأعلى لتعريفه وتحديد كميته أو وزنه.
+              </div>
+            </div>
+          </div>
+
+          <!-- Registered Barcodes Directory -->
+          <div class="lg:col-span-7 space-y-4">
+            <div class="glass-card rounded-2xl p-4 sm:p-5 space-y-4">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                <div>
+                  <h3 class="text-sm sm:text-base font-extrabold text-white">الأصناف والباركودات المسجلة ببيتك</h3>
+                  <p class="text-[11px] sm:text-xs text-slate-400">كل صنف تضيفه يظهر هنا بباركوده الخاص لتتمكن من مسحه بضغطة واحدة</p>
+                </div>
+                <select id="simulatorCategoryFilter" onchange="renderSimulatorBarcodes()" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 outline-none">
+                  <option value="all">كل التصنيفات</option>
+                  <option value="veg">الخضار والفواكه (بالكيلو)</option>
+                  <option value="meat">الدجاج واللحوم (صحن/حبة/أفخاذ)</option>
+                  <option value="rice_pasta">الرز (بالكيلو) والمكرونة (بالحبة)</option>
+                  <option value="canned">المعلبات والبقوليات (بالحبة)</option>
+                  <option value="cleaning">مواد التنظيف (سائل باللتر / بودرة بالكيلو)</option>
+                  <option value="dairy">الألبان والبيض والأجبان</option>
+                  <option value="spices">الزيوت والبهارات</option>
+                  <option value="frozen">المجمدات والمخبوزات</option>
+                </select>
+              </div>
+
+              <div id="simulatorBarcodesGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[520px] overflow-y-auto custom-scrollbar pr-1"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: SMART SHOPPING LIST -->
+      <section id="view-shopping" class="hidden space-y-4 sm:space-y-5">
+        <div class="glass-card rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-3.5">
+          <div>
+            <h2 class="text-base sm:text-lg font-extrabold text-white flex items-center gap-2">
+              <i data-lucide="shopping-cart" class="w-5 h-5 text-emerald-400"></i>
+              <span>قائمة طلبات ومقاضي البيت</span>
+            </h2>
+            <p class="text-[11px] sm:text-xs text-slate-400 mt-0.5">تترتب حسب التصنيفات مع الكميات المطلوبة باللتر، الكيلو، الحبة، أو صحون الدجاج</p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
+            <button type="button" onclick="autoSyncLowStockToShopping()" class="flex-1 md:flex-none justify-center px-3 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 text-xs font-bold flex items-center gap-1.5 transition">
+              <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+              <span>إضافة نواقص المخزون تلقائياً</span>
+            </button>
+            <button type="button" onclick="restockPurchasedItems()" class="flex-1 md:flex-none justify-center px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 transition">
+              <i data-lucide="package-check" class="w-4 h-4"></i>
+              <span>نقل المشتريات المحددة إلى مخزون البيت</span>
+            </button>
+            <button type="button" onclick="copyShoppingListToClipboard()" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold flex items-center gap-1.5 transition">
+              <i data-lucide="share-2" class="w-4 h-4 text-sky-400"></i>
+              <span>نسخ للواتساب</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick Add to Shopping List -->
+        <div class="glass-card rounded-2xl p-3.5 sm:p-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+          <select id="quickShopItemSelect" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white outline-none"></select>
+          <div class="flex items-center gap-2">
+            <input id="quickShopQtyInput" type="number" step="0.5" min="0.25" value="1" class="w-24 sm:w-28 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white text-center font-bold outline-none" />
+            <button type="button" onclick="addSelectedToShoppingList()" class="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-extrabold text-xs sm:text-sm whitespace-nowrap transition">
+              + أضف للقائمة
+            </button>
+          </div>
+        </div>
+
+        <div id="shoppingListContainer" class="space-y-3.5"></div>
+      </section>
+
+      <!-- TAB 4: BARCODE LABELS & CATALOG GENERATOR -->
+      <section id="view-labels" class="hidden space-y-4 sm:space-y-5">
+        <div class="glass-card rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5">
+          <div>
+            <h2 class="text-base sm:text-lg font-extrabold text-white flex items-center gap-2">
+              <i data-lucide="qr-code" class="w-5 h-5 text-emerald-400"></i>
+              <span>بطاقات باركود المقاضي المنزلية</span>
+            </h2>
+            <p class="text-[11px] sm:text-xs text-slate-400 mt-0.5">
+              أنشئ باركود خاص للأصناف التي تشتريها بالكيلو أو بالصحن (مثل الخضار والدجاج) لمسحها مباشرة بالجوال
+            </p>
+          </div>
+          <button type="button" onclick="openItemModal()" class="w-full sm:w-auto justify-center px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs sm:text-sm flex items-center gap-1.5 transition shrink-0">
+            <i data-lucide="plus-circle" class="w-4 h-4"></i>
+            <span>إنشاء باركود لصنف جديد</span>
+          </button>
+        </div>
+
+        <div id="barcodeCardsCatalogGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-4"></div>
+      </section>
+    </main>
+
+    <!-- Native Mobile Bottom Navigation Bar (5 dedicated pages) -->
+    <nav class="md:hidden fixed bottom-0 inset-x-0 z-40 glass-modal border-t border-slate-800/90 px-1.5 pt-1.5 safe-bottom-nav grid grid-cols-5 gap-1 shadow-2xl">
+      <button type="button" id="mobTabBtn-home" onclick="switchMainTab('home')" class="flex flex-col items-center justify-center py-1 px-1 rounded-xl text-emerald-400 bg-emerald-500/10 font-extrabold text-[10px] gap-0.5 transition">
+        <i data-lucide="home" class="w-5 h-5"></i>
+        <span>الرئيسية</span>
+      </button>
+      <button type="button" id="mobTabBtn-inventory" onclick="switchMainTab('inventory')" class="flex flex-col items-center justify-center py-1 px-1 rounded-xl text-slate-400 font-bold text-[10px] gap-0.5 transition">
+        <i data-lucide="package" class="w-5 h-5"></i>
+        <span>المخزون</span>
+      </button>
+      <button type="button" id="mobTabBtn-scanner" onclick="switchMainTab('scanner')" class="flex flex-col items-center justify-center py-1 px-1 rounded-xl text-slate-400 font-bold text-[10px] gap-0.5 transition">
+        <i data-lucide="scan-line" class="w-5 h-5"></i>
+        <span>الباركود</span>
+      </button>
+      <button type="button" id="mobTabBtn-shopping" onclick="switchMainTab('shopping')" class="relative flex flex-col items-center justify-center py-1 px-1 rounded-xl text-slate-400 font-bold text-[10px] gap-0.5 transition">
+        <i data-lucide="shopping-cart" class="w-5 h-5"></i>
+        <span>المقاضي</span>
+        <span id="mobShoppingBadgeCount" class="absolute top-0.5 right-2 px-1.5 bg-amber-500 text-slate-950 rounded-full text-[9px] font-black">0</span>
+      </button>
+      <button type="button" id="mobTabBtn-labels" onclick="switchMainTab('labels')" class="flex flex-col items-center justify-center py-1 px-1 rounded-xl text-slate-400 font-bold text-[10px] gap-0.5 transition">
+        <i data-lucide="qr-code" class="w-5 h-5"></i>
+        <span>الباركودات</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- MODAL: ADD / EDIT ITEM WITH SMART CATEGORY & UNIT CONFIG -->
+  <div id="itemFormModal" class="fixed inset-0 z-50 hidden items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/80 backdrop-blur-sm">
+    <div class="glass-modal rounded-t-3xl sm:rounded-3xl max-w-xl w-full p-5 sm:p-6 space-y-4 max-h-[92dvh] overflow-y-auto custom-scrollbar shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+            <i data-lucide="package-plus" class="w-5 h-5"></i>
+          </div>
+          <h3 id="modalFormTitle" class="text-sm sm:text-base font-extrabold text-white">إضافة / تعديل صنف بالمخزون</h3>
+        </div>
+        <button type="button" onclick="closeItemModal()" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <form id="inventoryItemForm" onsubmit="saveInventoryItem(event)" class="space-y-3.5">
+        <input type="hidden" id="formItemId" value="" />
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-300 mb-1">رقم الباركود (امسح أو ولّد تلقائياً)</label>
+            <div class="flex gap-1.5">
+              <input id="formBarcode" type="text" required placeholder="امسح الباركود هنا..." class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white font-mono outline-none focus:border-emerald-500" />
+              <button type="button" onclick="generateRandomBarcodeInForm()" class="px-3 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs text-emerald-400 font-bold border border-slate-700 shrink-0">
+                توليد
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-300 mb-1">التصنيف الرئيسي</label>
+            <select id="formCategory" onchange="handleFormCategoryChange()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-emerald-500">
+              <option value="veg">الخضار والفواكه (بالكيلو / الربطة)</option>
+              <option value="meat">الدجاج واللحوم (صحن / دجاجة كاملة / أفخاذ)</option>
+              <option value="rice_pasta">الرز (بالكيلو) والمكرونة (بالحبة)</option>
+              <option value="canned">المعلبات والبقوليات (بالحبة / العلبة)</option>
+              <option value="cleaning">مواد التنظيف (سائل باللتر / بودرة بالكيلو)</option>
+              <option value="dairy">الألبان والأجبان والبيض</option>
+              <option value="spices">الزيوت والبهارات والقهوة والشاي</option>
+              <option value="frozen">المجمدات والمخبوزات</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1">اسم الصنف</label>
+          <input id="formName" type="text" required placeholder="مثال: طماطم، صحن دجاج أفخاذ، رز بسمتي، مسحوق غسيل..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white outline-none focus:border-emerald-500" />
+        </div>
+
+        <!-- Dynamic Sub-Options for Chicken / Meat -->
+        <div id="meatDynamicFields" class="hidden p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 space-y-3">
+          <p class="text-xs font-extrabold text-amber-300 flex items-center gap-1.5">
+            <i data-lucide="utensils" class="w-4 h-4"></i>
+            <span>تفاصيل الدجاج واللحوم (نوع القطع وحجم ووزن الصحن)</span>
+          </p>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            <div>
+              <label class="block text-[11px] text-slate-300 mb-1">النوع / التقطيع</label>
+              <select id="formMeatCut" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white">
+                <option value="دجاجة كاملة">دجاجة كاملة</option>
+                <option value="أفخاذ دجاج">أفخاذ دجاج</option>
+                <option value="صدور دجاج">صدور دجاج فيليه</option>
+                <option value="أجنحة دجاج">أجنحة دجاج</option>
+                <option value="دجاج مقطّع 8 قطع">دجاج مقطّع 8 قطع</option>
+                <option value="لحم مفروم">لحم مفروم</option>
+                <option value="لحم قطع بالعظم">لحم قطع بالعظم</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-300 mb-1">نوع التعبئة / الصحن</label>
+              <select id="formTraySize" onchange="syncMeatTrayWeight()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white">
+                <option value="صحن صغير">صحن صغير (450 جم)</option>
+                <option value="صحن وسط">صحن وسط (700 جم)</option>
+                <option value="صحن كبير">صحن كبير (900 جم)</option>
+                <option value="صحن عائلي">صحن عائلي (1200 جم)</option>
+                <option value="دجاجة كاملة (كيس)">دجاجة كاملة (كيس)</option>
+                <option value="بالكيلو">وزن مفتوح بالكيلو</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-300 mb-1">وزن الصحن / الحبة (جرام)</label>
+              <input id="formTrayWeightGrams" type="number" step="50" value="450" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white font-bold" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Dynamic Sub-Options for Cleaning Supplies -->
+        <div id="cleaningDynamicFields" class="hidden p-3.5 rounded-2xl bg-purple-500/10 border border-purple-500/30 space-y-2.5">
+          <p class="text-xs font-extrabold text-purple-300 flex items-center gap-1.5">
+            <i data-lucide="droplets" class="w-4 h-4"></i>
+            <span>نوع مادة التنظيف (سائل باللتر أو بودرة بالكيلو)</span>
+          </p>
+          <div class="grid grid-cols-3 gap-2">
+            <button type="button" onclick="selectCleaningType('liquid')" id="cleanTypeBtn-liquid" class="py-2 px-2 rounded-xl text-xs font-bold bg-purple-600 text-white border border-purple-400">
+              سائل (باللتر)
+            </button>
+            <button type="button" onclick="selectCleaningType('powder')" id="cleanTypeBtn-powder" class="py-2 px-2 rounded-xl text-xs font-bold bg-slate-900 text-slate-300 border border-slate-700">
+              بودرة / مسحوق (بالكيلو)
+            </button>
+            <button type="button" onclick="selectCleaningType('piece')" id="cleanTypeBtn-piece" class="py-2 px-2 rounded-xl text-xs font-bold bg-slate-900 text-slate-300 border border-slate-700">
+              أدوات / عبوات (بالحبة)
+            </button>
+          </div>
+        </div>
+
+        <!-- Dynamic Sub-Options for Rice & Pasta -->
+        <div id="ricePastaDynamicFields" class="hidden p-3.5 rounded-2xl bg-sky-500/10 border border-sky-500/30 space-y-2.5">
+          <p class="text-xs font-extrabold text-sky-300">تحديد نوع الحبوب (الرز بالكيلو / المكرونة بالحبة):</p>
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" onclick="selectGrainUnit('كجم')" class="py-2 px-3 rounded-xl text-xs font-bold bg-sky-600/30 text-sky-200 border border-sky-500/40">
+              رز / دقيق / شوفان (بالكيلو - كجم)
+            </button>
+            <button type="button" onclick="selectGrainUnit('حبة')" class="py-2 px-3 rounded-xl text-xs font-bold bg-slate-900 text-slate-200 border border-slate-700">
+              مكرونة / شعيرية / نودلز (بالحبة)
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2.5 sm:gap-3">
+          <div>
+            <label class="block text-[11px] sm:text-xs font-bold text-slate-300 mb-1">الوحدة</label>
+            <select id="formUnit" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-2.5 text-xs sm:text-sm text-white outline-none focus:border-emerald-500">
+              <option value="كجم">كيلو (كجم)</option>
+              <option value="لتر">لتر (سائل)</option>
+              <option value="حبة">حبة / علبة</option>
+              <option value="صحن">صحن</option>
+              <option value="دجاجة">دجاجة كاملة</option>
+              <option value="ربطة">ربطة</option>
+              <option value="طبق">طبق</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-[11px] sm:text-xs font-bold text-slate-300 mb-1">الكمية المضافة</label>
+            <input id="formQuantity" type="number" step="0.25" min="0" required value="1" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-2.5 text-sm text-white font-bold text-center outline-none focus:border-emerald-500" />
+          </div>
+
+          <div>
+            <label class="block text-[11px] sm:text-xs font-bold text-slate-300 mb-1">حد التنبيه</label>
+            <input id="formMinThreshold" type="number" step="0.25" min="0" required value="1" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-2.5 text-sm text-white font-bold text-center outline-none focus:border-emerald-500" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1">ملاحظات إضافية (اختياري)</label>
+          <input id="formNotes" type="text" placeholder="مثال: الفريزر العلوي، أو الماركة المفضلة..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white outline-none focus:border-emerald-500" />
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
+          <button type="button" onclick="closeItemModal()" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold">
+            إلغاء
+          </button>
+          <button type="submit" class="flex-1 sm:flex-none px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs sm:text-sm">
+            حفظ الصنف في المخزون
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: QUICK SCAN POPUP -->
+  <div id="quickScanPopupModal" class="fixed inset-0 z-50 hidden items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/80 backdrop-blur-sm">
+    <div class="glass-modal rounded-t-3xl sm:rounded-3xl max-w-lg w-full p-5 sm:p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-2">
+          <i data-lucide="scan-barcode" class="w-5 h-5 text-emerald-400"></i>
+          <h3 class="text-sm sm:text-base font-extrabold text-white">المسح السريع للباركود</h3>
+        </div>
+        <button type="button" onclick="closeQuickScanModal()" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3">
+        <label class="block text-xs font-bold text-slate-300">امسح أو أدخل رقم الباركود لإضافة الصنف أو تعديل كميته فوراً:</label>
+        <div class="flex gap-2">
+          <input id="popupBarcodeInput" type="text" inputmode="numeric" onkeydown="if(event.key==='Enter'){handlePopupBarcodeSubmit();}" placeholder="أدخل أو امسح الباركود هنا..." class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white font-mono outline-none focus:border-emerald-500" />
+          <button type="button" onclick="handlePopupBarcodeSubmit()" class="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs">
+            مسح
+          </button>
+        </div>
+
+        <div id="popupQuickItemsList" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-56 overflow-y-auto custom-scrollbar pr-1"></div>
+      </div>
+
+      <div class="flex justify-between items-center pt-2 border-t border-slate-800">
+        <button type="button" onclick="closeQuickScanModal(); switchMainTab('scanner');" class="text-xs text-emerald-400 hover:underline font-bold flex items-center gap-1">
+          <i data-lucide="camera" class="w-3.5 h-3.5"></i>
+          <span>فتح الكاميرا واستوديو الباركود الكامل</span>
+        </button>
+        <button type="button" onclick="closeQuickScanModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold">
+          إغلاق
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: CONFIRM ZERO RESET -->
+  <div id="zeroResetModal" class="fixed inset-0 z-50 hidden items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/80 backdrop-blur-sm">
+    <div class="glass-modal rounded-t-3xl sm:rounded-3xl max-w-md w-full p-5 sm:p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center gap-2.5 text-rose-400">
+        <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
+        <h3 class="text-base font-extrabold text-white">تصفير المخزون وقائمة المقاضي</h3>
+      </div>
+      <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+        هل ترغب في تصفير جميع الأصناف والكميات وحذف أي بيانات مسجلة للبدء من الصفر؟
+      </p>
+      <div class="flex items-center justify-end gap-2 pt-2">
+        <button type="button" onclick="closeZeroResetModal()" class="px-4 py-2.5 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold">
+          إلغاء
+        </button>
+        <button type="button" onclick="confirmZeroOutInventory()" class="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-extrabold">
+          نعم، تصفير الكل
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toastNotification" class="fixed bottom-20 md:bottom-6 left-4 right-4 sm:left-5 sm:right-auto z-50 hidden items-center gap-2.5 px-4 py-3 rounded-2xl bg-slate-900/95 border border-emerald-500/40 text-white shadow-2xl">
+    <i data-lucide="check-circle" class="w-5 h-5 text-emerald-400 shrink-0"></i>
+    <span id="toastMessage" class="text-xs sm:text-sm font-bold"></span>
+  </div>
+
+  <script>
+    // New clean storage keys so inventory starts 100% zeroed out with no pre-filled items
+    const STORAGE_KEY_INVENTORY = 'maqadina_inventory_v2_clean';
+    const STORAGE_KEY_SHOPPING = 'maqadina_shopping_v2_clean';
+
+    const CATEGORIES = {
+      all: { id: 'all', name: 'كل المقاضي', icon: 'layout-grid', color: 'emerald', defaultUnit: 'حبة', step: 1 },
+      veg: { id: 'veg', name: 'الخضار والفواكه', icon: 'carrot', color: 'emerald', defaultUnit: 'كجم', step: 0.5, subtitle: 'بالكيلو أو الربطة' },
+      meat: { id: 'meat', name: 'الدجاج واللحوم', icon: 'drumstick', color: 'amber', defaultUnit: 'صحن', step: 1, subtitle: 'بالصحن (صغير/كبير) أو دجاجة كاملة أو أفخاذ' },
+      rice_pasta: { id: 'rice_pasta', name: 'الرز والمكرونات', icon: 'wheat', color: 'sky', defaultUnit: 'كجم', step: 1, subtitle: 'الرز بالكيلو والمكرونة بالحبة' },
+      canned: { id: 'canned', name: 'المعلبات والبقوليات', icon: 'package', color: 'orange', defaultUnit: 'حبة', step: 1, subtitle: 'بالحبة والعلبة (فول، تونة، ذرة)' },
+      cleaning: { id: 'cleaning', name: 'مواد التنظيف', icon: 'sparkles', color: 'purple', defaultUnit: 'لتر', step: 0.5, subtitle: 'السائل باللتر والبودرة بالكيلو' },
+      dairy: { id: 'dairy', name: 'الألبان والبيض والأجبان', icon: 'milk', color: 'cyan', defaultUnit: 'لتر', step: 1, subtitle: 'الحليب باللتر والبيض بالطبق' },
+      spices: { id: 'spices', name: 'الزيوت والبهارات والشاي', icon: 'flame', color: 'rose', defaultUnit: 'لتر', step: 0.5, subtitle: 'الزيت باللتر والبهارات بالكيلو/العلبة' },
+      frozen: { id: 'frozen', name: 'المجمدات والمخبوزات', icon: 'snowflake', color: 'indigo', defaultUnit: 'حبة', step: 1, subtitle: 'بالكيس أو الحبة' }
+    };
+
+    // Completely zeroed initial inventory as requested
+    const INITIAL_INVENTORY = [];
+
+    let inventory = [];
+    let shoppingList = [];
+    let currentTab = 'home';
+    let selectedCategory = 'all';
+    let searchQuery = '';
+    let statusFilter = 'all';
+    let scanActionMode = 'add';
+    let lastScannedBarcode = '';
+    let html5QrScanner = null;
+    let isCameraActive = false;
+
+    function loadAppState() {
+      try {
+        // Clear legacy demo keys so old sample items never reappear
+        localStorage.removeItem('maqadina_inventory_v1');
+        localStorage.removeItem('maqadina_shopping_v1');
+
+        const savedInv = localStorage.getItem(STORAGE_KEY_INVENTORY);
+        inventory = savedInv ? JSON.parse(savedInv) : [];
+
+        const savedShop = localStorage.getItem(STORAGE_KEY_SHOPPING);
+        shoppingList = savedShop ? JSON.parse(savedShop) : [];
+      } catch (e) {
+        inventory = [];
+        shoppingList = [];
+      }
+    }
+
+    function saveAppState() {
+      try {
+        localStorage.setItem(STORAGE_KEY_INVENTORY, JSON.stringify(inventory));
+        localStorage.setItem(STORAGE_KEY_SHOPPING, JSON.stringify(shoppingList));
+      } catch (e) {
+        // Ignore storage errors in sandboxed preview
+      }
+    }
+
+    function openZeroResetModal() {
+      const m = document.getElementById('zeroResetModal');
+      if (!m) return;
+      m.classList.remove('hidden');
+      m.classList.add('flex');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function closeZeroResetModal() {
+      const m = document.getElementById('zeroResetModal');
+      if (!m) return;
+      m.classList.add('hidden');
+      m.classList.remove('flex');
+    }
+
+    function confirmZeroOutInventory() {
+      inventory = [];
+      shoppingList = [];
+      lastScannedBarcode = '';
+      saveAppState();
+      updateSummaryStats();
+      renderInventoryView();
+      renderSimulatorBarcodes();
+      renderShoppingList();
+      renderBarcodeLabelsCatalog();
+      closeZeroResetModal();
+      showToast('تم تصفير المخزون وقائمة المقاضي بالكامل');
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toastNotification');
+      const msgEl = document.getElementById('toastMessage');
+      if (!toast || !msgEl) return;
+      msgEl.textContent = msg;
+      toast.classList.remove('hidden');
+      toast.classList.add('flex');
+      if (window._toastTimer) clearTimeout(window._toastTimer);
+      window._toastTimer = setTimeout(() => {
+        toast.classList.add('hidden');
+        toast.classList.remove('flex');
+      }, 2800);
+    }
+
+    function formatQuantity(qty) {
+      const num = Number(qty) || 0;
+      return Number.isInteger(num) ? num.toString() : num.toFixed(2).replace(/\.?0+$/, '');
+    }
+
+    function updateSummaryStats() {
+      const total = inventory.length;
+      const available = inventory.filter(i => i.quantity > i.minThreshold).length;
+      const low = inventory.filter(i => i.quantity <= i.minThreshold).length;
+      const shopCount = shoppingList.filter(s => !s.checked).length;
+
+      document.getElementById('statTotalItems').textContent = total;
+      document.getElementById('statAvailableItems').textContent = available;
+      document.getElementById('statLowItems').textContent = low;
+      document.getElementById('statShoppingCount').textContent = shoppingList.length;
+      document.getElementById('shoppingBadgeCount').textContent = shopCount;
+      const mobBadge = document.getElementById('mobShoppingBadgeCount');
+      if (mobBadge) mobBadge.textContent = shopCount;
+    }
+
+    function switchMainTab(tab) {
+      currentTab = tab;
+      const tabs = ['home', 'inventory', 'scanner', 'shopping', 'labels'];
+      tabs.forEach(t => {
+        const view = document.getElementById('view-' + t);
+        const btn = document.getElementById('tabBtn-' + t);
+        if (view) {
+          if (t === tab) view.classList.remove('hidden');
+          else view.classList.add('hidden');
+        }
+        if (btn) {
+          if (t === tab) {
+            btn.className = 'px-1.5 sm:px-3.5 py-2 rounded-xl text-[10px] sm:text-xs lg:text-sm font-bold transition-all flex items-center justify-center gap-1 sm:gap-1.5 bg-emerald-600 text-white shadow relative';
+          } else {
+            btn.className = 'px-1.5 sm:px-3.5 py-2 rounded-xl text-[10px] sm:text-xs lg:text-sm font-bold transition-all flex items-center justify-center gap-1 sm:gap-1.5 text-slate-300 hover:text-white relative';
+          }
+        }
+        const mobBtn = document.getElementById('mobTabBtn-' + t);
+        if (mobBtn) {
+          if (t === tab) {
+            mobBtn.className = 'relative flex flex-col items-center justify-center py-1 px-1 rounded-xl text-emerald-400 bg-emerald-500/10 font-extrabold text-[10px] gap-0.5 transition';
+          } else {
+            mobBtn.className = 'relative flex flex-col items-center justify-center py-1 px-1 rounded-xl text-slate-400 hover:text-slate-200 font-bold text-[10px] gap-0.5 transition';
+          }
+        }
+      });
+
+      if (tab !== 'scanner' && isCameraActive) {
+        stopCameraScanner();
+      }
+
+      if (tab === 'scanner') {
+        renderSimulatorBarcodes();
+        if (lastScannedBarcode) renderScannedResultPanel(lastScannedBarcode);
+      } else if (tab === 'shopping') {
+        renderShoppingList();
+        populateQuickShopSelect();
+      } else if (tab === 'labels') {
+        renderBarcodeLabelsCatalog();
+      } else {
+        renderInventoryView();
+      }
+      if (window.lucide) lucide.createIcons();
+    }
+
+    let isInventoryBoxOpened = false;
+
+    function openCategoryBox(catId, forcedStatus) {
+      selectedCategory = catId || 'all';
+      if (forcedStatus) {
+        statusFilter = forcedStatus;
+        const sSelect = document.getElementById('stockStatusFilter');
+        if (sSelect) sSelect.value = forcedStatus;
+      }
+      isInventoryBoxOpened = true;
+      if (currentTab !== 'inventory') {
+        switchMainTab('inventory');
+      } else {
+        renderInventoryView();
+      }
+    }
+
+    function closeCategoryBox() {
+      isInventoryBoxOpened = false;
+      searchQuery = '';
+      statusFilter = 'all';
+      const sInput = document.getElementById('inventorySearchInput');
+      const sSelect = document.getElementById('stockStatusFilter');
+      if (sInput) sInput.value = '';
+      if (sSelect) sSelect.value = 'all';
+      renderInventoryView();
+    }
+
+    function renderInventoryView() {
+      const boxesView = document.getElementById('inventoryCategoriesGridView');
+      const listView = document.getElementById('inventoryItemsListView');
+      if (!boxesView || !listView) return;
+
+      if (isInventoryBoxOpened) {
+        boxesView.classList.add('hidden');
+        listView.classList.remove('hidden');
+        const catObj = CATEGORIES[selectedCategory] || CATEGORIES.all;
+        const titleEl = document.getElementById('openedCategoryTitle');
+        const subEl = document.getElementById('openedCategorySubtitle');
+        if (titleEl) titleEl.textContent = catObj.name;
+        if (subEl) subEl.textContent = catObj.subtitle || 'جميع الأصناف المسجلة في المخزون';
+        renderInventoryGrid();
+      } else {
+        listView.classList.add('hidden');
+        boxesView.classList.remove('hidden');
+        renderCategoryBar();
+      }
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function renderCategoryBar() {
+      const grid = document.getElementById('categoryBoxesGrid');
+      if (!grid) return;
+
+      const colorMap = {
+        emerald: 'from-emerald-500/20 to-teal-500/5 border-emerald-500/30 text-emerald-400',
+        amber: 'from-amber-500/20 to-orange-500/5 border-amber-500/30 text-amber-400',
+        sky: 'from-sky-500/20 to-blue-500/5 border-sky-500/30 text-sky-400',
+        orange: 'from-orange-500/20 to-rose-500/5 border-orange-500/30 text-orange-400',
+        purple: 'from-purple-500/20 to-fuchsia-500/5 border-purple-500/30 text-purple-400',
+        cyan: 'from-cyan-500/20 to-sky-500/5 border-cyan-500/30 text-cyan-400',
+        rose: 'from-rose-500/20 to-pink-500/5 border-rose-500/30 text-rose-400',
+        indigo: 'from-indigo-500/20 to-violet-500/5 border-indigo-500/30 text-indigo-400'
+      };
+
+      grid.innerHTML = Object.values(CATEGORIES).map(cat => {
+        const itemsInCat = cat.id === 'all' ? inventory : inventory.filter(i => i.category === cat.id);
+        const lowCount = itemsInCat.filter(i => i.quantity <= i.minThreshold).length;
+        const theme = colorMap[cat.color] || colorMap.emerald;
+
+        return `
+          <button
+            type="button"
+            onclick="openCategoryBox('${cat.id}')"
+            class="text-right glass-card hover:border-emerald-400/50 rounded-2xl p-4 flex flex-col justify-between gap-3 transition active:scale-[0.98]"
+          >
+            <div class="flex items-start justify-between gap-2 w-full">
+              <div class="w-11 h-11 rounded-2xl bg-gradient-to-br ${theme} border flex items-center justify-center shrink-0">
+                <i data-lucide="${cat.icon}" class="w-5 h-5"></i>
+              </div>
+              <span class="px-2 py-0.5 rounded-full bg-slate-900 border border-slate-700 text-xs font-black text-white">
+                ${itemsInCat.length}
+              </span>
+            </div>
+            <div>
+              <h3 class="text-sm sm:text-base font-extrabold text-white">${cat.name}</h3>
+              <p class="text-[11px] text-slate-400 mt-0.5 line-clamp-1">${cat.subtitle || 'عرض كل الأصناف'}</p>
+            </div>
+            <div class="flex items-center justify-between text-[11px] pt-1 border-t border-slate-800/80 w-full">
+              <span class="${lowCount > 0 ? 'text-amber-300 font-bold' : 'text-emerald-400'}">
+                ${lowCount > 0 ? `${lowCount} نواقص` : 'اضغط للفتح'}
+              </span>
+              <i data-lucide="chevron-left" class="w-4 h-4 text-slate-400"></i>
+            </div>
+          </button>
+        `;
+      }).join('');
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function selectCategory(catId) {
+      openCategoryBox(catId);
+    }
+
+    function handleSearchChange(val) {
+      searchQuery = (val || '').trim().toLowerCase();
+      renderInventoryGrid();
+    }
+
+    function handleStatusFilterChange(val) {
+      statusFilter = val;
+      renderInventoryGrid();
+    }
+
+    function resetFilters() {
+      searchQuery = '';
+      statusFilter = 'all';
+      const sInput = document.getElementById('inventorySearchInput');
+      const sSelect = document.getElementById('stockStatusFilter');
+      if (sInput) sInput.value = '';
+      if (sSelect) sSelect.value = 'all';
+      renderInventoryGrid();
+    }
+
+    function getStockBadge(item) {
+      if (item.quantity <= 0) {
+        return { label: 'نفد من البيت', classes: 'bg-rose-500/20 text-rose-300 border-rose-500/30', barColor: 'bg-rose-500' };
+      }
+      if (item.quantity <= item.minThreshold) {
+        return { label: 'قارب على النفاد', classes: 'bg-amber-500/20 text-amber-300 border-amber-500/30', barColor: 'bg-amber-400' };
+      }
+      return { label: 'متوفر بكفاية', classes: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30', barColor: 'bg-emerald-500' };
+    }
+
+    function renderInventoryGrid() {
+      const grid = document.getElementById('inventoryGrid');
+      if (!grid) return;
+
+      const filtered = inventory.filter(item => {
+        if (selectedCategory !== 'all' && item.category !== selectedCategory) return false;
+        if (statusFilter === 'ok' && item.quantity <= item.minThreshold) return false;
+        if (statusFilter === 'low' && (item.quantity > item.minThreshold || item.quantity <= 0)) return false;
+        if (statusFilter === 'out' && item.quantity > 0) return false;
+
+        if (searchQuery) {
+          const hay = `${item.name} ${item.barcode} ${item.subType || ''} ${item.packInfo || ''} ${item.unit} ${item.notes || ''}`.toLowerCase();
+          if (!hay.includes(searchQuery)) return false;
+        }
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        const catObj = CATEGORIES[selectedCategory] || CATEGORIES.all;
+        grid.innerHTML = `
+          <div class="col-span-full glass-card rounded-2xl p-6 sm:p-10 text-center space-y-4">
+            <div class="w-14 h-14 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center mx-auto">
+              <i data-lucide="scan-barcode" class="w-7 h-7"></i>
+            </div>
+            <div class="space-y-1">
+              <p class="text-base sm:text-lg font-extrabold text-white">
+                ${inventory.length === 0 ? 'المخزون مصفّر وجاهز لإضافة مقاضيك' : `لا توجد أصناف في "${catObj.name}" حالياً`}
+              </p>
+              <p class="text-xs sm:text-sm text-slate-400 max-w-md mx-auto">
+                امسح باركود أي صنف بالكاميرا أو أضفه يدوياً ليتم تصنيفه تلقائياً (خضار بالكيلو، دجاج بالصحن الصغير/الكبير أو بالحبة، منظفات باللتر أو الكيلو، ومعلبات بالحبة).
+              </p>
+            </div>
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-1">
+              <button type="button" onclick="switchMainTab('scanner')" class="w-full sm:w-auto px-5 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-slate-950 font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg">
+                <i data-lucide="camera" class="w-4 h-4"></i>
+                <span>مسح باركود لإضافة صنف</span>
+              </button>
+              <button type="button" onclick="openItemModal()" class="w-full sm:w-auto px-5 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 border border-slate-700">
+                <i data-lucide="plus" class="w-4 h-4 text-emerald-400"></i>
+                <span>إضافة صنف جديد يدوياً</span>
+              </button>
+            </div>
+          </div>
+        `;
+        if (window.lucide) lucide.createIcons();
+        return;
+      }
+
+      grid.innerHTML = filtered.map(item => {
+        const cat = CATEGORIES[item.category] || CATEGORIES.all;
+        const status = getStockBadge(item);
+        const step = item.step || (item.unit === 'كجم' || item.unit === 'لتر' ? 0.5 : 1);
+        const pct = Math.min(100, Math.round((item.quantity / Math.max(item.minThreshold * 2, 1)) * 100));
+
+        const totalWeightInfo = (item.category === 'meat' && item.weightGrams)
+          ? `<span class="text-[11px] text-amber-300 font-bold">(${formatQuantity((item.quantity * item.weightGrams) / 1000)} كجم إجمالي)</span>`
+          : '';
+
+        return `
+          <div class="glass-card rounded-2xl p-4 flex flex-col justify-between gap-3.5 hover:border-slate-700 transition">
+            <div class="space-y-2.5">
+              <div class="flex items-start justify-between gap-2">
+                <div class="flex flex-wrap items-center gap-1.5">
+                  <span class="px-2.5 py-0.5 rounded-lg bg-slate-800 text-slate-300 text-[11px] font-bold flex items-center gap-1 border border-slate-700">
+                    <i data-lucide="${cat.icon}" class="w-3.5 h-3.5 text-emerald-400"></i>
+                    ${cat.name}
+                  </span>
+                  <span class="px-2 py-0.5 rounded-lg text-[11px] font-bold border ${status.classes}">
+                    ${status.label}
+                  </span>
+                </div>
+                <div class="flex items-center gap-1">
+                  <button type="button" onclick="openItemModal('${item.id}')" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800" title="تعديل الصنف">
+                    <i data-lucide="settings-2" class="w-4 h-4"></i>
+                  </button>
+                  <button type="button" onclick="deleteInventoryItem('${item.id}')" class="text-slate-400 hover:text-rose-400 p-1.5 rounded-lg hover:bg-slate-800" title="حذف الصنف">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <h3 class="text-base font-extrabold text-white leading-snug">${item.name}</h3>
+                <div class="flex flex-wrap items-center gap-1.5 mt-1">
+                  <span class="text-[11px] font-mono text-slate-400 bg-slate-900/90 px-2 py-0.5 rounded border border-slate-800">
+                    باركود: ${item.barcode}
+                  </span>
+                  ${item.subType ? `<span class="text-[11px] px-2 py-0.5 rounded bg-slate-800/90 text-emerald-300 font-medium">${item.subType}</span>` : ''}
+                  ${item.packInfo ? `<span class="text-[11px] px-2 py-0.5 rounded bg-slate-800/90 text-amber-300 font-medium">${item.packInfo}</span>` : ''}
+                </div>
+              </div>
+
+              <!-- Quantity Display Box -->
+              <div class="bg-slate-900/90 rounded-2xl p-3 border border-slate-800/90 space-y-2">
+                <div class="flex items-baseline justify-between">
+                  <span class="text-xs text-slate-400">الكمية المتوفرة:</span>
+                  <div class="flex items-baseline gap-1.5">
+                    <span class="text-2xl font-black text-white">${formatQuantity(item.quantity)}</span>
+                    <span class="text-xs font-extrabold text-emerald-400">${item.unit}</span>
+                    ${totalWeightInfo}
+                  </div>
+                </div>
+                <div class="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
+                  <div class="h-full ${status.barColor} transition-all duration-300" style="width: ${pct}%"></div>
+                </div>
+                <div class="flex items-center justify-between text-[11px] text-slate-400">
+                  <span>حد التنبيه: ${formatQuantity(item.minThreshold)} ${item.unit}</span>
+                  <span class="truncate max-w-[140px]">${item.notes || ''}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Interactive Controls -->
+            <div class="pt-1 flex items-center justify-between gap-2">
+              <div class="flex items-center gap-1.5 bg-slate-900 p-1 rounded-xl border border-slate-800">
+                <button
+                  type="button"
+                  onclick="adjustItemQuantity('${item.id}', -${step})"
+                  class="w-9 h-9 rounded-lg bg-rose-500/15 hover:bg-rose-500/30 text-rose-300 font-black text-base flex items-center justify-center transition"
+                  title="سحب / استهلاك"
+                >
+                  -
+                </button>
+                <span class="text-xs font-bold text-slate-300 px-1.5">±${step} ${item.unit}</span>
+                <button
+                  type="button"
+                  onclick="adjustItemQuantity('${item.id}', ${step})"
+                  class="w-9 h-9 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/30 text-emerald-300 font-black text-base flex items-center justify-center transition"
+                  title="إضافة للمخزون"
+                >
+                  +
+                </button>
+              </div>
+
+              <div class="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onclick="simulateScanFromCard('${item.barcode}')"
+                  class="px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-300 text-xs font-bold flex items-center gap-1 border border-slate-700 transition"
+                  title="مسح الباركود"
+                >
+                  <i data-lucide="scan-line" class="w-3.5 h-3.5"></i>
+                  <span>مسح</span>
+                </button>
+                <button
+                  type="button"
+                  onclick="quickAddItemToShopping('${item.id}')"
+                  class="px-2.5 py-2 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 border border-sky-500/30 text-xs font-bold flex items-center gap-1 transition"
+                  title="إضافة لقائمة المقاضي"
+                >
+                  <i data-lucide="shopping-cart" class="w-3.5 h-3.5"></i>
+                  <span>للمقاضي</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function deleteInventoryItem(itemId) {
+      const target = inventory.find(i => i.id === itemId);
+      inventory = inventory.filter(i => i.id !== itemId);
+      saveAppState();
+      updateSummaryStats();
+      renderInventoryView();
+      renderSimulatorBarcodes();
+      renderBarcodeLabelsCatalog();
+      if (target) showToast(`تم حذف "${target.name}" من المخزون`);
+    }
+
+    function adjustItemQuantity(itemId, delta) {
+      const item = inventory.find(i => i.id === itemId);
+      if (!item) return;
+      const next = Math.max(0, Math.round((item.quantity + delta) * 100) / 100);
+      item.quantity = next;
+      saveAppState();
+      updateSummaryStats();
+      renderInventoryGrid();
+      if (currentTab === 'scanner' && lastScannedBarcode === item.barcode) {
+        renderScannedResultPanel(item.barcode);
+      }
+      showToast(`تم تحديث "${item.name}" إلى ${formatQuantity(item.quantity)} ${item.unit}`);
+    }
+
+    function quickAddItemToShopping(itemId) {
+      const item = inventory.find(i => i.id === itemId);
+      if (!item) return;
+      const existing = shoppingList.find(s => s.barcode === item.barcode);
+      const defaultAdd = item.unit === 'كجم' || item.unit === 'لتر' ? 1.5 : 2;
+      if (existing) {
+        existing.neededQty = Math.round((existing.neededQty + (item.step || 1)) * 100) / 100;
+        existing.checked = false;
+      } else {
+        shoppingList.unshift({
+          id: 'shop-' + Date.now(),
+          itemId: item.id,
+          barcode: item.barcode,
+          name: item.name,
+          category: item.category,
+          unit: item.unit,
+          neededQty: Math.max(defaultAdd, item.minThreshold),
+          packInfo: item.packInfo || '',
+          checked: false
+        });
+      }
+      saveAppState();
+      updateSummaryStats();
+      showToast(`تمت إضافة "${item.name}" إلى قائمة المقاضي`);
+    }
+
+    function autoSyncLowStockToShopping() {
+      if (inventory.length === 0) {
+        showToast('المخزون فارغ حالياً — أضف أصنافك أولاً');
+        return;
+      }
+      let addedCount = 0;
+      inventory.forEach(item => {
+        if (item.quantity <= item.minThreshold) {
+          const exists = shoppingList.find(s => s.barcode === item.barcode);
+          const needed = Math.max(item.minThreshold * 2 - item.quantity, item.step || 1);
+          if (!exists) {
+            shoppingList.push({
+              id: 'shop-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+              itemId: item.id,
+              barcode: item.barcode,
+              name: item.name,
+              category: item.category,
+              unit: item.unit,
+              neededQty: Math.round(needed * 100) / 100,
+              packInfo: item.packInfo || '',
+              checked: false
+            });
+            addedCount++;
+          }
+        }
+      });
+      saveAppState();
+      updateSummaryStats();
+      if (currentTab === 'shopping') renderShoppingList();
+      showToast(addedCount > 0 ? `تمت إضافة ${addedCount} نواقص إلى قائمة المقاضي تلقائياً` : 'لا توجد نواقص جديدة لإضافتها');
+    }
+
+    // BARCODE SCANNER LOGIC
+    function setScanActionMode(mode) {
+      scanActionMode = mode;
+      ['add', 'consume', 'shop'].forEach(m => {
+        const btn = document.getElementById('scanMode-' + m);
+        if (!btn) return;
+        if (m === mode) {
+          btn.className = 'py-2 px-2 rounded-lg text-[11px] sm:text-xs font-bold bg-emerald-600 text-white border border-emerald-500 transition';
+        } else {
+          btn.className = 'py-2 px-2 rounded-lg text-[11px] sm:text-xs font-bold bg-slate-800 text-slate-300 border border-slate-700 transition';
+        }
+      });
+      if (lastScannedBarcode) renderScannedResultPanel(lastScannedBarcode);
+    }
+
+    function simulateScanFromCard(barcode) {
+      lastScannedBarcode = barcode;
+      switchMainTab('scanner');
+      triggerBarcodeScan(barcode);
+    }
+
+    function triggerBarcodeScan(rawCode) {
+      const code = (rawCode || '').trim();
+      if (!code) {
+        showToast('يرجى إدخال أو مسح رقم الباركود أولاً');
+        return;
+      }
+      lastScannedBarcode = code;
+      const inputEl = document.getElementById('manualBarcodeInput');
+      if (inputEl) inputEl.value = code;
+      renderScannedResultPanel(code);
+    }
+
+    function renderScannedResultPanel(barcode) {
+      const labelEl = document.getElementById('scannedBarcodeLabel');
+      const boxEl = document.getElementById('scannedItemDynamicContent');
+      if (!labelEl || !boxEl) return;
+
+      if (!barcode) {
+        labelEl.textContent = 'في انتظار المسح';
+        boxEl.innerHTML = 'امسح أي باركود بالكاميرا أو اكتب رقمه بالأعلى لتعريفه وتحديد كميته أو وزنه.';
+        return;
+      }
+
+      labelEl.textContent = `باركود: ${barcode}`;
+      const item = inventory.find(i => i.barcode === barcode);
+
+      if (!item) {
+        boxEl.innerHTML = `
+          <div class="space-y-3 text-right">
+            <div class="p-3 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-200 text-xs">
+              الباركود (<span class="font-mono font-bold">${barcode}</span>) جديد وغير مسجل في مخزونك بعد.
+            </div>
+            <p class="text-xs text-slate-300">اضغط بالأسفل لتسمية الصنف واختيار تصنيفه (خضار بالكيلو، دجاج بالصحن/الحبة، منظفات باللتر/الكيلو، أو معلبات بالحبة):</p>
+            <button type="button" onclick="openItemModalWithBarcode('${barcode}')" class="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs sm:text-sm">
+              + تعريف هذا الباركود وإضافته للمخزون
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      const cat = CATEGORIES[item.category] || CATEGORIES.all;
+      const presetSteps = item.unit === 'كجم' || item.unit === 'لتر'
+        ? [0.25, 0.5, 1, 2, 5]
+        : [1, 2, 3, 6, 12];
+
+      const modeTitle = scanActionMode === 'add'
+        ? 'إضافة كمية جديدة إلى مخزون البيت'
+        : scanActionMode === 'consume'
+        ? 'سحب / استهلاك من مخزون البيت'
+        : 'إضافة إلى قائمة المقاضي';
+
+      const modeBtnClass = scanActionMode === 'consume'
+        ? 'bg-rose-500 hover:bg-rose-400 text-white'
+        : scanActionMode === 'shop'
+        ? 'bg-sky-500 hover:bg-sky-400 text-slate-950'
+        : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950';
+
+      boxEl.innerHTML = `
+        <div class="text-right space-y-4">
+          <div class="flex items-start justify-between gap-2 bg-slate-900/90 p-3.5 rounded-2xl border border-slate-800">
+            <div>
+              <span class="text-[11px] font-bold text-emerald-400">${cat.name}</span>
+              <h4 class="text-base font-extrabold text-white mt-0.5">${item.name}</h4>
+              <div class="flex flex-wrap gap-1.5 mt-1">
+                ${item.subType ? `<span class="text-[11px] px-2 py-0.5 rounded bg-slate-800 text-slate-300">${item.subType}</span>` : ''}
+                ${item.packInfo ? `<span class="text-[11px] px-2 py-0.5 rounded bg-amber-500/15 text-amber-300">${item.packInfo}</span>` : ''}
+              </div>
+            </div>
+            <div class="text-left">
+              <span class="text-[11px] text-slate-400 block">المتوفر حالياً</span>
+              <span class="text-xl font-black text-emerald-400">${formatQuantity(item.quantity)} ${item.unit}</span>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <label class="block text-xs font-bold text-slate-300">${modeTitle} (${item.unit}):</label>
+            <div class="flex flex-wrap gap-1.5">
+              ${presetSteps.map(val => `
+                <button type="button" onclick="document.getElementById('scanCustomQtyInput').value='${val}'" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-emerald-300 border border-slate-700">
+                  ${val} ${item.unit}
+                </button>
+              `).join('')}
+            </div>
+            <div class="flex items-center gap-2 pt-1">
+              <input id="scanCustomQtyInput" type="number" step="0.25" min="0.25" value="${item.step || 1}" class="w-24 sm:w-28 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm font-black text-white text-center outline-none focus:border-emerald-500" />
+              <span class="text-xs font-bold text-slate-400">${item.unit}</span>
+              <button type="button" onclick="applyScannedQuantityAction('${item.id}')" class="flex-1 py-2.5 px-4 rounded-xl font-extrabold text-xs sm:text-sm transition ${modeBtnClass}">
+                تأكيد العملية بالباركود
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function applyScannedQuantityAction(itemId) {
+      const item = inventory.find(i => i.id === itemId);
+      if (!item) return;
+      const qtyInput = document.getElementById('scanCustomQtyInput');
+      const amount = Math.max(0.1, parseFloat(qtyInput ? qtyInput.value : 1) || 1);
+
+      if (scanActionMode === 'add') {
+        item.quantity = Math.round((item.quantity + amount) * 100) / 100;
+        showToast(`تم مسح الباركود وإضافة ${formatQuantity(amount)} ${item.unit} من "${item.name}"`);
+      } else if (scanActionMode === 'consume') {
+        item.quantity = Math.max(0, Math.round((item.quantity - amount) * 100) / 100);
+        showToast(`تم مسح الباركود وسحب ${formatQuantity(amount)} ${item.unit} من "${item.name}"`);
+      } else {
+        const existing = shoppingList.find(s => s.barcode === item.barcode);
+        if (existing) {
+          existing.neededQty = Math.round((existing.neededQty + amount) * 100) / 100;
+          existing.checked = false;
+        } else {
+          shoppingList.unshift({
+            id: 'shop-' + Date.now(),
+            itemId: item.id,
+            barcode: item.barcode,
+            name: item.name,
+            category: item.category,
+            unit: item.unit,
+            neededQty: amount,
+            packInfo: item.packInfo || '',
+            checked: false
+          });
+        }
+        showToast(`تمت إضافة ${formatQuantity(amount)} ${item.unit} من "${item.name}" لقائمة المقاضي`);
+      }
+
+      saveAppState();
+      updateSummaryStats();
+      renderScannedResultPanel(item.barcode);
+      renderSimulatorBarcodes();
+    }
+
+    function renderSimulatorBarcodes() {
+      const grid = document.getElementById('simulatorBarcodesGrid');
+      const filterEl = document.getElementById('simulatorCategoryFilter');
+      if (!grid) return;
+
+      const catFilter = filterEl ? filterEl.value : 'all';
+      const list = inventory.filter(i => catFilter === 'all' || i.category === catFilter);
+
+      if (list.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full rounded-2xl bg-slate-900/70 border border-slate-800 p-6 text-center space-y-3">
+            <p class="text-sm font-bold text-slate-200">لا توجد أصناف مسجلة بعد</p>
+            <p class="text-xs text-slate-400">عند إضافة أي صنف جديد سيظهر باركوده هنا للوصول السريع.</p>
+            <button type="button" onclick="openItemModal()" class="px-4 py-2 rounded-xl bg-emerald-500 text-slate-950 font-extrabold text-xs">
+              + إضافة أول صنف بالباركود
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = list.map(item => {
+        const cat = CATEGORIES[item.category] || CATEGORIES.all;
+        const isSelected = lastScannedBarcode === item.barcode;
+        return `
+          <button
+            type="button"
+            onclick="triggerBarcodeScan('${item.barcode}')"
+            class="text-right p-3.5 rounded-2xl border transition flex items-center justify-between gap-3 ${
+              isSelected
+                ? 'bg-emerald-950/50 border-emerald-500 shadow-lg'
+                : 'bg-slate-900/80 hover:bg-slate-800/80 border-slate-800'
+            }"
+          >
+            <div class="space-y-1 min-w-0">
+              <div class="flex items-center gap-1.5">
+                <span class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-emerald-300 font-bold">${cat.name}</span>
+                <span class="text-[11px] text-amber-300 font-bold">${item.packInfo || item.unit}</span>
+              </div>
+              <p class="text-xs sm:text-sm font-extrabold text-white truncate">${item.name}</p>
+              <p class="text-[11px] text-slate-400">المتوفر: <span class="text-white font-bold">${formatQuantity(item.quantity)} ${item.unit}</span></p>
+            </div>
+            <div class="shrink-0 flex flex-col items-center bg-white text-slate-950 px-2.5 py-1.5 rounded-xl">
+              <div class="w-16 h-6 barcode-bars"></div>
+              <span class="text-[10px] font-mono font-bold mt-0.5">${item.barcode}</span>
+            </div>
+          </button>
+        `;
+      }).join('');
+    }
+
+    // LIVE CAMERA BARCODE SCANNER (Real-time POS/Supermarket Continuous Reader)
+    let nativeVideoStream = null;
+    let nativeScanInterval = null;
+    let zxingLiveReader = null;
+    let isTorchOn = false;
+    let lastDecodedAt = 0;
+
+    function playScannerBeep() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(1850, ctx.currentTime);
+        gain.gain.setValueAtTime(0.18, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.14);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.14);
+      } catch (e) {}
+      try {
+        if (navigator.vibrate) navigator.vibrate(90);
+      } catch (e) {}
+    }
+
+    function showCameraNotice(msg) {
+      const el = document.getElementById('cameraStatusNotice');
+      if (!el) return;
+      if (!msg) {
+        el.classList.add('hidden');
+        el.textContent = '';
+      } else {
+        el.textContent = msg;
+        el.classList.remove('hidden');
+      }
+    }
+
+    function toggleCameraScanner() {
+      if (isCameraActive) {
+        stopCameraScanner();
+      } else {
+        startCameraScanner();
+      }
+    }
+
+    async function toggleCameraTorch() {
+      if (!nativeVideoStream) return;
+      const track = nativeVideoStream.getVideoTracks()[0];
+      if (!track || !track.applyConstraints) return;
+      try {
+        isTorchOn = !isTorchOn;
+        await track.applyConstraints({ advanced: [{ torch: isTorchOn }] });
+        showToast(isTorchOn ? 'تم تشغيل الفلاش' : 'تم إطفاء الفلاش');
+      } catch (e) {
+        showToast('الفلاش غير مدعوم في هذا المتصفح');
+      }
+    }
+
+    function onLiveBarcodeDetected(code) {
+      const now = Date.now();
+      if (!code || now - lastDecodedAt < 1200) return;
+      lastDecodedAt = now;
+      playScannerBeep();
+      triggerBarcodeScan(code);
+      showToast('تمت قراءة الباركود: ' + code);
+    }
+
+    async function startCameraScanner() {
+      const placeholder = document.getElementById('cameraPlaceholder');
+      const btn = document.getElementById('cameraToggleBtn');
+      const videoEl = document.getElementById('nativeBarcodeVideo');
+      const overlay = document.getElementById('liveScannerOverlay');
+      const torchBtn = document.getElementById('torchToggleBtn');
+      showCameraNotice('');
+
+      if (!window.isSecureContext) {
+        showCameraNotice('لأسباب أمنية في المتصفح، الكاميرا المباشرة تعمل فقط على رابط HTTPS. افتح التطبيق عبر استضافة HTTPS (مثل GitHub Pages) وستعمل الكاميرا فوراً.');
+        showToast('الكاميرا المباشرة تتطلب رابط HTTPS');
+        return;
+      }
+
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        showCameraNotice('نافذة المعاينة الحالية تحجب صلاحية الكاميرا المباشرة. عند فتح التطبيق في متصفح جوالك على رابط HTTPS ستعمل الكاميرا فوراً.');
+        return;
+      }
+
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: 'environment' },
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          },
+          audio: false
+        });
+        nativeVideoStream = stream;
+        isCameraActive = true;
+
+        const track = stream.getVideoTracks()[0];
+        if (track && track.getCapabilities) {
+          const caps = track.getCapabilities();
+          if (caps.focusMode && caps.focusMode.includes('continuous')) {
+            track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(() => {});
+          }
+          if (caps.torch && torchBtn) {
+            torchBtn.classList.remove('hidden');
+          }
+        }
+
+        if (placeholder) placeholder.classList.add('hidden');
+        if (overlay) overlay.classList.remove('hidden');
+        if (btn) {
+          btn.innerHTML = '<i data-lucide="video-off" class="w-3.5 h-3.5"></i><span>إيقاف الكاميرا</span>';
+          btn.className = 'px-3 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold flex items-center gap-1.5 transition shrink-0';
+          if (window.lucide) lucide.createIcons();
+        }
+
+        if (videoEl) {
+          videoEl.srcObject = stream;
+          videoEl.setAttribute('playsinline', 'true');
+          videoEl.classList.remove('hidden');
+          await videoEl.play();
+        }
+
+        if ('BarcodeDetector' in window && videoEl) {
+          const detector = new BarcodeDetector({
+            formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'itf', 'qr_code']
+          });
+          nativeScanInterval = setInterval(async () => {
+            if (!isCameraActive || videoEl.readyState < 2) return;
+            try {
+              const barcodes = await detector.detect(videoEl);
+              if (barcodes && barcodes.length > 0 && barcodes[0].rawValue) {
+                onLiveBarcodeDetected(barcodes[0].rawValue);
+              }
+            } catch (e) {}
+          }, 180);
+          return;
+        } else if (window.ZXing && window.ZXing.BrowserMultiFormatReader && videoEl) {
+          zxingLiveReader = new window.ZXing.BrowserMultiFormatReader();
+          zxingLiveReader.decodeFromVideoElementContinuously(videoEl, (result, err) => {
+            if (result && result.text && isCameraActive) {
+              onLiveBarcodeDetected(result.text);
+            }
+          });
+          return;
+        }
+      } catch (err) {
+        stopCameraScanner();
+        showCameraNotice('تعذر تشغيل الكاميرا داخل نافذة المعاينة الحالية لأن النظام يمنع الوصول للكاميرا في وضع المعاينة. عند تشغيل التطبيق مباشرة في متصفح جوالك عبر HTTPS ستفتح الكاميرا وتقرأ الباركود تلقائياً مثل أجهزة المتاجر.');
+        showToast('تعذر فتح الكاميرا في نافذة المعاينة');
+      }
+    }
+
+    function stopCameraScanner() {
+      const placeholder = document.getElementById('cameraPlaceholder');
+      const btn = document.getElementById('cameraToggleBtn');
+      const videoEl = document.getElementById('nativeBarcodeVideo');
+      const overlay = document.getElementById('liveScannerOverlay');
+      const torchBtn = document.getElementById('torchToggleBtn');
+
+      if (nativeScanInterval) {
+        clearInterval(nativeScanInterval);
+        nativeScanInterval = null;
+      }
+      if (zxingLiveReader) {
+        try { zxingLiveReader.reset(); } catch (e) {}
+        zxingLiveReader = null;
+      }
+      if (nativeVideoStream) {
+        nativeVideoStream.getTracks().forEach(t => t.stop());
+        nativeVideoStream = null;
+      }
+      if (videoEl) {
+        videoEl.srcObject = null;
+        videoEl.classList.add('hidden');
+      }
+      isTorchOn = false;
+      isCameraActive = false;
+      if (overlay) overlay.classList.add('hidden');
+      if (torchBtn) torchBtn.classList.add('hidden');
+      if (placeholder) placeholder.classList.remove('hidden');
+      if (btn) {
+        btn.innerHTML = '<i data-lucide="video" class="w-3.5 h-3.5"></i><span>تشغيل الكاميرا</span>';
+        btn.className = 'px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 transition shrink-0';
+        if (window.lucide) lucide.createIcons();
+      }
+    }
+
+    // SHOPPING LIST FUNCTIONS
+    function populateQuickShopSelect() {
+      const sel = document.getElementById('quickShopItemSelect');
+      if (!sel) return;
+      if (inventory.length === 0) {
+        sel.innerHTML = '<option value="">أضف أصنافاً للمخزون أولاً لتتمكن من اختيارها...</option>';
+        return;
+      }
+      sel.innerHTML = inventory.map(item => `
+        <option value="${item.id}">${item.name} (${item.packInfo || item.unit}) - المتوفر: ${formatQuantity(item.quantity)} ${item.unit}</option>
+      `).join('');
+    }
+
+    function addSelectedToShoppingList() {
+      const sel = document.getElementById('quickShopItemSelect');
+      const qtyInput = document.getElementById('quickShopQtyInput');
+      if (!sel || !sel.value) {
+        showToast('أضف صنفاً للمخزون أولاً أو امسح باركوده');
+        return;
+      }
+      const item = inventory.find(i => i.id === sel.value);
+      if (!item) return;
+      const qty = Math.max(0.25, parseFloat(qtyInput ? qtyInput.value : 1) || 1);
+
+      const existing = shoppingList.find(s => s.barcode === item.barcode);
+      if (existing) {
+        existing.neededQty = Math.round((existing.neededQty + qty) * 100) / 100;
+        existing.checked = false;
+      } else {
+        shoppingList.unshift({
+          id: 'shop-' + Date.now(),
+          itemId: item.id,
+          barcode: item.barcode,
+          name: item.name,
+          category: item.category,
+          unit: item.unit,
+          neededQty: qty,
+          packInfo: item.packInfo || '',
+          checked: false
+        });
+      }
+      saveAppState();
+      updateSummaryStats();
+      renderShoppingList();
+      showToast(`أضيف "${item.name}" (${formatQuantity(qty)} ${item.unit}) إلى قائمة المقاضي`);
+    }
+
+    function renderShoppingList() {
+      const container = document.getElementById('shoppingListContainer');
+      if (!container) return;
+
+      if (shoppingList.length === 0) {
+        container.innerHTML = `
+          <div class="glass-card rounded-2xl p-8 sm:p-10 text-center space-y-3">
+            <div class="w-12 h-12 rounded-2xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center mx-auto">
+              <i data-lucide="shopping-bag" class="w-6 h-6"></i>
+            </div>
+            <p class="text-base font-bold text-white">قائمة المقاضي فارغة (0)</p>
+            <p class="text-xs text-slate-400">امسح باركود أي صنف في وضع "+ لقائمة المقاضي" أو أضف أصنافك للمخزون</p>
+          </div>
+        `;
+        if (window.lucide) lucide.createIcons();
+        return;
+      }
+
+      const grouped = {};
+      shoppingList.forEach(entry => {
+        const c = entry.category || 'all';
+        if (!grouped[c]) grouped[c] = [];
+        grouped[c].push(entry);
+      });
+
+      container.innerHTML = Object.keys(grouped).map(catKey => {
+        const cat = CATEGORIES[catKey] || CATEGORIES.all;
+        const items = grouped[catKey];
+        return `
+          <div class="glass-card rounded-2xl p-4 space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+              <div class="flex items-center gap-2">
+                <i data-lucide="${cat.icon}" class="w-4 h-4 text-emerald-400"></i>
+                <h3 class="text-sm font-extrabold text-white">${cat.name}</h3>
+                <span class="text-xs text-slate-400">(${items.length} أصناف)</span>
+              </div>
+              <span class="text-[11px] text-slate-400 hidden sm:inline">${cat.subtitle || ''}</span>
+            </div>
+            <div class="space-y-2">
+              ${items.map(s => `
+                <div class="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl bg-slate-900/80 border ${s.checked ? 'border-emerald-500/40 bg-emerald-950/20' : 'border-slate-800'}">
+                  <div class="flex items-center gap-3 min-w-0">
+                    <button
+                      type="button"
+                      onclick="toggleShoppingCheck('${s.id}')"
+                      class="w-6 h-6 rounded-lg border flex items-center justify-center shrink-0 transition ${
+                        s.checked ? 'bg-emerald-500 border-emerald-400 text-slate-950' : 'border-slate-600 text-transparent hover:border-emerald-400'
+                      }"
+                    >
+                      <i data-lucide="check" class="w-4 h-4"></i>
+                    </button>
+                    <div class="min-w-0">
+                      <p class="text-sm font-bold truncate ${s.checked ? 'line-through text-slate-400' : 'text-white'}">${s.name}</p>
+                      <div class="flex items-center gap-2 text-[11px] text-slate-400">
+                        <span class="font-mono">${s.barcode}</span>
+                        ${s.packInfo ? `<span class="text-amber-300 truncate">• ${s.packInfo}</span>` : ''}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center gap-2 mr-auto sm:mr-0">
+                    <div class="flex items-center gap-1 bg-slate-950 px-2 py-1 rounded-lg border border-slate-800">
+                      <button type="button" onclick="changeShopQty('${s.id}', -0.5)" class="text-slate-400 hover:text-white px-1.5 font-bold">-</button>
+                      <span class="text-xs font-extrabold text-emerald-400 px-1.5">${formatQuantity(s.neededQty)} ${s.unit}</span>
+                      <button type="button" onclick="changeShopQty('${s.id}', 0.5)" class="text-slate-400 hover:text-white px-1.5 font-bold">+</button>
+                    </div>
+                    <button type="button" onclick="removeShoppingEntry('${s.id}')" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-slate-800">
+                      <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function toggleShoppingCheck(shopId) {
+      const entry = shoppingList.find(s => s.id === shopId);
+      if (!entry) return;
+      entry.checked = !entry.checked;
+      saveAppState();
+      updateSummaryStats();
+      renderShoppingList();
+    }
+
+    function changeShopQty(shopId, delta) {
+      const entry = shoppingList.find(s => s.id === shopId);
+      if (!entry) return;
+      entry.neededQty = Math.max(0.25, Math.round((entry.neededQty + delta) * 100) / 100);
+      saveAppState();
+      renderShoppingList();
+    }
+
+    function removeShoppingEntry(shopId) {
+      shoppingList = shoppingList.filter(s => s.id !== shopId);
+      saveAppState();
+      updateSummaryStats();
+      renderShoppingList();
+    }
+
+    function restockPurchasedItems() {
+      const checked = shoppingList.filter(s => s.checked);
+      if (checked.length === 0) {
+        showToast('حدد الأصناف التي اشتريتها بوضع علامة صح أولاً لنقلها للمخزون');
+        return;
+      }
+      checked.forEach(s => {
+        const invItem = inventory.find(i => i.barcode === s.barcode || i.id === s.itemId);
+        if (invItem) {
+          invItem.quantity = Math.round((invItem.quantity + s.neededQty) * 100) / 100;
+        }
+      });
+      shoppingList = shoppingList.filter(s => !s.checked);
+      saveAppState();
+      updateSummaryStats();
+      renderShoppingList();
+      showToast(`تم نقل ${checked.length} أصناف مشتراة وإضافتها إلى مخزون البيت بنجاح!`);
+    }
+
+    function copyShoppingListToClipboard() {
+      if (shoppingList.length === 0) {
+        showToast('قائمة المقاضي فارغة');
+        return;
+      }
+      const lines = ['🛒 *قائمة مقاضي البيت الذكية:*'];
+      shoppingList.forEach((s, idx) => {
+        const mark = s.checked ? '✅' : '⬜';
+        lines.push(`${idx + 1}. ${mark} ${s.name} — الكمية: ${formatQuantity(s.neededQty)} ${s.unit} ${s.packInfo ? '(' + s.packInfo + ')' : ''}`);
+      });
+      const text = lines.join('\n');
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+          showToast('تم نسخ قائمة المقاضي جاهزة للإرسال في واتساب');
+        }).catch(() => fallbackCopyText(text));
+      } else {
+        fallbackCopyText(text);
+      }
+    }
+
+    function fallbackCopyText(text) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand('copy');
+        showToast('تم نسخ قائمة المقاضي للحافظة');
+      } catch (e) {}
+      document.body.removeChild(ta);
+    }
+
+    // TAB 4: BARCODE LABELS CATALOG (With Edit & Delete on every barcode card)
+    function renderBarcodeLabelsCatalog() {
+      const grid = document.getElementById('barcodeCardsCatalogGrid');
+      if (!grid) return;
+
+      if (inventory.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full glass-card rounded-2xl p-8 text-center space-y-3">
+            <div class="w-12 h-12 rounded-2xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center mx-auto">
+              <i data-lucide="qr-code" class="w-6 h-6"></i>
+            </div>
+            <p class="text-base font-bold text-white">لا توجد بطاقات باركود محفوظة بعد</p>
+            <p class="text-xs text-slate-400">اضغط "إنشاء باركود لصنف جديد" لتوليد بطاقات باركود وتعديلها أو حذفها في أي وقت</p>
+          </div>
+        `;
+        if (window.lucide) lucide.createIcons();
+        return;
+      }
+
+      grid.innerHTML = inventory.map(item => {
+        const cat = CATEGORIES[item.category] || CATEGORIES.all;
+        return `
+          <div class="glass-card rounded-2xl p-4 flex flex-col justify-between gap-3 border border-slate-800">
+            <div class="space-y-1">
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-[11px] font-bold text-emerald-400">${cat.name}</span>
+                <div class="flex items-center gap-1">
+                  <span class="text-[11px] px-2 py-0.5 rounded bg-slate-800 text-amber-300 font-bold">${item.unit}</span>
+                  <button type="button" onclick="openItemModal('${item.id}')" class="p-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-sky-300 transition" title="تعديل الباركود والصنف">
+                    <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                  </button>
+                  <button type="button" onclick="deleteInventoryItem('${item.id}')" class="p-1.5 rounded-lg bg-slate-800/80 hover:bg-rose-500/20 text-rose-400 transition" title="حذف بطاقة الباركود">
+                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                  </button>
+                </div>
+              </div>
+              <h4 class="text-sm font-extrabold text-white">${item.name}</h4>
+              <p class="text-[11px] text-slate-400">${item.packInfo || item.subType || ''}</p>
+            </div>
+
+            <div class="bg-white text-slate-950 rounded-xl p-3 flex flex-col items-center justify-center space-y-1 shadow-inner">
+              <div class="w-full h-10 barcode-bars"></div>
+              <span class="text-xs font-mono font-black tracking-widest">${item.barcode}</span>
+            </div>
+
+            <div class="flex items-center gap-1.5">
+              <button
+                type="button"
+                onclick="simulateScanFromCard('${item.barcode}')"
+                class="flex-1 py-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition"
+              >
+                <i data-lucide="scan-line" class="w-3.5 h-3.5"></i>
+                <span>مسح الآن</span>
+              </button>
+              <button
+                type="button"
+                onclick="openItemModal('${item.id}')"
+                class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold transition"
+              >
+                تعديل
+              </button>
+              <button
+                type="button"
+                onclick="deleteInventoryItem('${item.id}')"
+                class="px-3 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 text-xs font-bold transition"
+              >
+                حذف
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    // MODAL ADD / EDIT ITEM LOGIC
+    function handleFormCategoryChange() {
+      const cat = document.getElementById('formCategory').value;
+      const unitEl = document.getElementById('formUnit');
+      const meatBox = document.getElementById('meatDynamicFields');
+      const cleanBox = document.getElementById('cleaningDynamicFields');
+      const riceBox = document.getElementById('ricePastaDynamicFields');
+
+      meatBox.classList.add('hidden');
+      cleanBox.classList.add('hidden');
+      riceBox.classList.add('hidden');
+
+      if (cat === 'veg') {
+        unitEl.value = 'كجم';
+      } else if (cat === 'meat') {
+        meatBox.classList.remove('hidden');
+        unitEl.value = 'صحن';
+      } else if (cat === 'cleaning') {
+        cleanBox.classList.remove('hidden');
+        unitEl.value = 'لتر';
+      } else if (cat === 'rice_pasta') {
+        riceBox.classList.remove('hidden');
+        unitEl.value = 'كجم';
+      } else if (cat === 'canned') {
+        unitEl.value = 'حبة';
+      } else if (cat === 'dairy') {
+        unitEl.value = 'لتر';
+      } else if (cat === 'spices') {
+        unitEl.value = 'لتر';
+      } else {
+        unitEl.value = 'حبة';
+      }
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function syncMeatTrayWeight() {
+      const size = document.getElementById('formTraySize').value;
+      const weightInput = document.getElementById('formTrayWeightGrams');
+      const unitSelect = document.getElementById('formUnit');
+      if (size === 'صحن صغير') {
+        weightInput.value = 450;
+        unitSelect.value = 'صحن';
+      } else if (size === 'صحن وسط') {
+        weightInput.value = 700;
+        unitSelect.value = 'صحن';
+      } else if (size === 'صحن كبير') {
+        weightInput.value = 900;
+        unitSelect.value = 'صحن';
+      } else if (size === 'صحن عائلي') {
+        weightInput.value = 1200;
+        unitSelect.value = 'صحن';
+      } else if (size === 'دجاجة كاملة (كيس)') {
+        weightInput.value = 1100;
+        unitSelect.value = 'دجاجة';
+      } else {
+        weightInput.value = 1000;
+        unitSelect.value = 'كجم';
+      }
+    }
+
+    function selectCleaningType(type) {
+      const unitEl = document.getElementById('formUnit');
+      ['liquid', 'powder', 'piece'].forEach(t => {
+        const btn = document.getElementById('cleanTypeBtn-' + t);
+        if (!btn) return;
+        if (t === type) {
+          btn.className = 'py-2 px-2 rounded-xl text-xs font-bold bg-purple-600 text-white border border-purple-400';
+        } else {
+          btn.className = 'py-2 px-2 rounded-xl text-xs font-bold bg-slate-900 text-slate-300 border border-slate-700';
+        }
+      });
+      if (type === 'liquid') unitEl.value = 'لتر';
+      else if (type === 'powder') unitEl.value = 'كجم';
+      else unitEl.value = 'حبة';
+    }
+
+    function selectGrainUnit(unitVal) {
+      const unitEl = document.getElementById('formUnit');
+      if (unitEl) unitEl.value = unitVal;
+    }
+
+    function generateRandomBarcodeInForm() {
+      const randomCode = '6281' + Math.floor(100000 + Math.random() * 900000);
+      document.getElementById('formBarcode').value = randomCode;
+    }
+
+    function openItemModal(itemId) {
+      const modal = document.getElementById('itemFormModal');
+      const title = document.getElementById('modalFormTitle');
+      if (!modal) return;
+
+      if (itemId) {
+        const item = inventory.find(i => i.id === itemId);
+        if (!item) return;
+        title.textContent = 'تعديل بيانات الصنف والباركود';
+        document.getElementById('formItemId').value = item.id;
+        document.getElementById('formBarcode').value = item.barcode;
+        document.getElementById('formCategory').value = item.category;
+        handleFormCategoryChange();
+        document.getElementById('formName').value = item.name;
+        document.getElementById('formUnit').value = item.unit;
+        document.getElementById('formQuantity').value = item.quantity;
+        document.getElementById('formMinThreshold').value = item.minThreshold;
+        document.getElementById('formNotes').value = item.notes || '';
+        if (item.category === 'meat') {
+          document.getElementById('formTrayWeightGrams').value = item.weightGrams || 900;
+        }
+      } else {
+        title.textContent = 'إضافة صنف جديد للمخزون بالباركود';
+        document.getElementById('formItemId').value = '';
+        generateRandomBarcodeInForm();
+        document.getElementById('formCategory').value = selectedCategory === 'all' ? 'veg' : selectedCategory;
+        handleFormCategoryChange();
+        document.getElementById('formName').value = '';
+        document.getElementById('formQuantity').value = 1;
+        document.getElementById('formMinThreshold').value = 1;
+        document.getElementById('formNotes').value = '';
+      }
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function openItemModalWithBarcode(barcode) {
+      openItemModal();
+      document.getElementById('formBarcode').value = barcode;
+    }
+
+    function closeItemModal() {
+      const modal = document.getElementById('itemFormModal');
+      if (!modal) return;
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function saveInventoryItem(event) {
+      event.preventDefault();
+      const id = document.getElementById('formItemId').value;
+      const barcode = document.getElementById('formBarcode').value.trim();
+      const category = document.getElementById('formCategory').value;
+      const name = document.getElementById('formName').value.trim();
+      const unit = document.getElementById('formUnit').value;
+      const quantity = parseFloat(document.getElementById('formQuantity').value) || 0;
+      const minThreshold = parseFloat(document.getElementById('formMinThreshold').value) || 1;
+      const notes = document.getElementById('formNotes').value.trim();
+
+      let subType = '';
+      let packInfo = `بالـ ${unit}`;
+      let weightGrams = 1000;
+
+      if (category === 'meat') {
+        const cut = document.getElementById('formMeatCut').value;
+        const tray = document.getElementById('formTraySize').value;
+        const grams = parseInt(document.getElementById('formTrayWeightGrams').value, 10) || 700;
+        subType = cut;
+        packInfo = `${tray} (${grams} جم)`;
+        weightGrams = grams;
+      } else if (category === 'cleaning') {
+        subType = unit === 'لتر' ? 'منظف سائل (باللتر)' : unit === 'كجم' ? 'منظف بودرة / مسحوق (بالكيلو)' : 'عبوات تنظيف (بالحبة)';
+        packInfo = subType;
+      } else if (category === 'rice_pasta') {
+        subType = unit === 'كجم' ? 'رز / حبوب بالكيلو' : 'مكرونة / شعيرية بالحبة';
+        packInfo = subType;
+      } else if (category === 'veg') {
+        subType = unit === 'كجم' ? 'خضار بالكيلو' : 'ورقيات بالربطة';
+        packInfo = subType;
+      } else if (category === 'canned') {
+        subType = 'معلبات بالحبة';
+        packInfo = 'علبة / حبة';
+      }
+
+      const step = unit === 'كجم' || unit === 'لتر' ? 0.5 : 1;
+
+      if (id) {
+        const existing = inventory.find(i => i.id === id);
+        if (existing) {
+          existing.barcode = barcode;
+          existing.category = category;
+          existing.name = name;
+          existing.unit = unit;
+          existing.quantity = quantity;
+          existing.minThreshold = minThreshold;
+          existing.notes = notes;
+          existing.subType = subType;
+          existing.packInfo = packInfo;
+          existing.weightGrams = weightGrams;
+          existing.step = step;
+        }
+        showToast(`تم تحديث بيانات "${name}" بنجاح`);
+      } else {
+        inventory.unshift({
+          id: 'item-' + Date.now(),
+          barcode,
+          name,
+          category,
+          unit,
+          quantity,
+          minThreshold,
+          step,
+          subType,
+          packInfo,
+          weightGrams,
+          notes
+        });
+        showToast(`تمت إضافة "${name}" إلى مخزون البيت`);
+      }
+
+      lastScannedBarcode = barcode;
+      saveAppState();
+      updateSummaryStats();
+      renderInventoryView();
+      renderSimulatorBarcodes();
+      renderBarcodeLabelsCatalog();
+      if (currentTab === 'scanner') renderScannedResultPanel(barcode);
+      closeItemModal();
+    }
+
+    // QUICK SCAN POPUP MODAL
+    function openQuickScanModal() {
+      const modal = document.getElementById('quickScanPopupModal');
+      const listEl = document.getElementById('popupQuickItemsList');
+      if (!modal || !listEl) return;
+
+      if (inventory.length === 0) {
+        listEl.innerHTML = `
+          <div class="col-span-full p-3 rounded-xl bg-slate-900 border border-slate-800 text-center text-xs text-slate-400">
+            اكتب أو امسح أي رقم باركود بالأعلى واضغط "مسح" لتعريفه وإضافته فوراً
+          </div>
+        `;
+      } else {
+        listEl.innerHTML = inventory.slice(0, 10).map(item => `
+          <button
+            type="button"
+            onclick="closeQuickScanModal(); simulateScanFromCard('${item.barcode}');"
+            class="p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-right flex items-center justify-between gap-2 transition"
+          >
+            <div class="min-w-0">
+              <p class="text-xs font-bold text-white truncate">${item.name}</p>
+              <p class="text-[10px] text-emerald-400 font-mono">${item.barcode} • ${formatQuantity(item.quantity)} ${item.unit}</p>
+            </div>
+            <i data-lucide="scan-line" class="w-4 h-4 text-slate-400 shrink-0"></i>
+          </button>
+        `).join('');
+      }
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function closeQuickScanModal() {
+      const modal = document.getElementById('quickScanPopupModal');
+      if (!modal) return;
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function handlePopupBarcodeSubmit() {
+      const val = document.getElementById('popupBarcodeInput').value.trim();
+      if (!val) return;
+      closeQuickScanModal();
+      simulateScanFromCard(val);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadAppState();
+      updateSummaryStats();
+      renderInventoryView();
+      renderSimulatorBarcodes();
+      renderScannedResultPanel(lastScannedBarcode);
+      if (window.lucide) lucide.createIcons();
+    });
+  </script>
+</body>
+</html>
