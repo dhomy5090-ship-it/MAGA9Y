@@ -6,12 +6,15 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="theme-color" content="#090d16" />
-  <title>مقاضينا | نظام إدارة مخزون البيت والباركود الذكي</title>
+  <title>مقاضينا الذكي V1.4 | نظام إدارة مخزون البيت والباركود</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-app-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-database-compat.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet" />
   <style>
     * {
@@ -116,10 +119,14 @@
               <div class="flex items-center gap-1.5">
                 <h1 class="text-sm sm:text-xl font-extrabold tracking-tight text-white truncate">مقاضينا الذكي</h1>
                 <span class="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-bold shrink-0">بالباركود</span>
-                <span id="appVersionBadge" class="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-300 border border-sky-500/30 font-mono font-extrabold shrink-0">V1.1</span>
+                <span id="appVersionBadge" class="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-300 border border-sky-500/30 font-mono font-extrabold shrink-0">V1.4</span>
                 <button type="button" onclick="openAiBrainModal()" class="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/40 font-extrabold flex items-center gap-1 shrink-0 transition" title="مركز الذكاء الاصطناعي والتعلم الذاتي">
                   <i data-lucide="brain-circuit" class="w-3 h-3"></i>
                   <span id="aiHeaderStatusText">AI نشط</span>
+                </button>
+                <button type="button" id="cloudHeaderStatusBtn" onclick="openCloudSyncModal()" class="text-[10px] sm:text-xs px-2.5 py-0.5 rounded-full bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 font-extrabold flex items-center gap-1.5 shrink-0 transition" title="حالة المزامنة السحابية">
+                  <span id="cloudHeaderDot" class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                  <span id="cloudHeaderStatusText">جاري الفحص...</span>
                 </button>
               </div>
               <p class="text-[10px] sm:text-xs text-slate-400 truncate">إدارة مخزون البيت وقائمة الطلبات</p>
@@ -795,7 +802,7 @@
             <i data-lucide="brain-circuit" class="w-5 h-5"></i>
           </div>
           <div>
-            <h3 class="text-sm sm:text-base font-extrabold text-white">مركز ذكاء جيمناي والتعلم الذاتي (AI V1.1)</h3>
+            <h3 class="text-sm sm:text-base font-extrabold text-white">مركز ذكاء جيمناي والتعلم الذاتي (AI V1.4)</h3>
             <p class="text-[11px] text-slate-400">يتعلم من مقاضيك وباركوداتك ويطور دقة التصنيف والترتيب تلقائياً</p>
           </div>
         </div>
@@ -847,6 +854,59 @@
         <button type="button" onclick="closeAiBrainModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-200 text-xs font-bold">
           إغلاق
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: READ-ONLY FIREBASE CLOUD STATUS CHECK -->
+  <div id="cloudSyncModal" class="fixed inset-0 z-50 hidden items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/80 backdrop-blur-sm">
+    <div class="glass-modal rounded-t-3xl sm:rounded-3xl max-w-md w-full p-5 sm:p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+            <i data-lucide="cloud" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-sm sm:text-base font-extrabold text-white">حالة السحابة (Firebase V1.4)</h3>
+            <p class="text-[11px] text-slate-400">فحص جاهزية الربط والمزامنة التلقائية بين الجوال والكمبيوتر</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeCloudSyncModal()" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3">
+        <div id="cloudStatusBanner" class="p-4 rounded-2xl bg-slate-900/90 border border-slate-700 flex items-center justify-between gap-3">
+          <div class="flex items-center gap-2.5">
+            <span id="cloudModalDot" class="w-3 h-3 rounded-full bg-amber-400 shrink-0"></span>
+            <div>
+              <p id="cloudModalStateBadge" class="text-sm font-extrabold text-white">جاري فحص الاتصال...</p>
+              <p id="cloudModalDetailText" class="text-[11px] text-slate-400 mt-0.5">يتم التحقق من Firestore و Realtime Database</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2.5 text-center">
+          <div class="p-3 rounded-2xl bg-slate-900/80 border border-slate-800">
+            <p class="text-[11px] text-slate-400">الجهاز الحالي</p>
+            <p id="cloudCurrentDeviceLabel" class="text-xs font-extrabold text-sky-300 mt-1">جوال / كمبيوتر</p>
+          </div>
+          <div class="p-3 rounded-2xl bg-slate-900/80 border border-slate-800">
+            <p class="text-[11px] text-slate-400">آخر مزامنة ناجحة</p>
+            <p id="cloudLastSyncTime" class="text-xs font-bold text-emerald-400 mt-1">-</p>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between gap-2 pt-2 border-t border-slate-800">
+          <button type="button" onclick="verifyFirebaseConnectionNow()" class="flex-1 py-2.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs flex items-center justify-center gap-1.5 transition">
+            <i data-lucide="activity" class="w-4 h-4"></i>
+            <span>فحص الاتصال الآن</span>
+          </button>
+          <button type="button" onclick="closeCloudSyncModal()" class="px-4 py-2.5 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold">
+            إغلاق
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -905,12 +965,16 @@
       }
     }
 
-    function saveAppState() {
+    function saveAppState(skipCloudPush) {
       try {
         localStorage.setItem(STORAGE_KEY_INVENTORY, JSON.stringify(inventory));
         localStorage.setItem(STORAGE_KEY_SHOPPING, JSON.stringify(shoppingList));
+        localStorage.setItem(STORAGE_KEY_TOMBSTONES, JSON.stringify(cloudTombstones));
       } catch (e) {
         // Ignore storage errors in sandboxed preview
+      }
+      if (!skipCloudPush) {
+        scheduleSmartCloudPush();
       }
     }
 
@@ -930,6 +994,9 @@
     }
 
     function confirmZeroOutInventory() {
+      inventory.forEach(i => recordDeletedTombstone(i.id, i.barcode));
+      shoppingList.forEach(sh => recordDeletedTombstone(sh.id, sh.barcode));
+      cloudTombstones.lastFullResetAt = Date.now();
       inventory = [];
       shoppingList = [];
       lastScannedBarcode = '';
@@ -1321,6 +1388,9 @@
 
     function deleteInventoryItem(itemId) {
       const target = inventory.find(i => i.id === itemId);
+      if (target) {
+        recordDeletedTombstone(target.id, target.barcode);
+      }
       inventory = inventory.filter(i => i.id !== itemId);
       saveAppState();
       updateSummaryStats();
@@ -1335,6 +1405,7 @@
       if (!item) return;
       const next = Math.max(0, Math.round((item.quantity + delta) * 100) / 100);
       item.quantity = next;
+      item.updatedAt = Date.now();
       saveAppState();
       updateSummaryStats();
       renderInventoryGrid();
@@ -1362,7 +1433,8 @@
           unit: item.unit,
           neededQty: Math.max(defaultAdd, item.minThreshold),
           packInfo: item.packInfo || '',
-          checked: false
+          checked: false,
+          updatedAt: Date.now()
         });
       }
       saveAppState();
@@ -1911,7 +1983,8 @@
           unit: item.unit,
           neededQty: qty,
           packInfo: item.packInfo || '',
-          checked: false
+          checked: false,
+          updatedAt: Date.now()
         });
       }
       saveAppState();
@@ -2004,6 +2077,7 @@
       const entry = shoppingList.find(s => s.id === shopId);
       if (!entry) return;
       entry.checked = !entry.checked;
+      entry.updatedAt = Date.now();
       saveAppState();
       updateSummaryStats();
       renderShoppingList();
@@ -2013,11 +2087,14 @@
       const entry = shoppingList.find(s => s.id === shopId);
       if (!entry) return;
       entry.neededQty = Math.max(0.25, Math.round((entry.neededQty + delta) * 100) / 100);
+      entry.updatedAt = Date.now();
       saveAppState();
       renderShoppingList();
     }
 
     function removeShoppingEntry(shopId) {
+      const target = shoppingList.find(s => s.id === shopId);
+      if (target) recordDeletedTombstone(target.id, '');
       shoppingList = shoppingList.filter(s => s.id !== shopId);
       saveAppState();
       updateSummaryStats();
@@ -2349,6 +2426,7 @@
           existing.packInfo = packInfo;
           existing.weightGrams = weightGrams;
           existing.step = step;
+          existing.updatedAt = Date.now();
         }
         showToast(`تم تحديث بيانات "${name}" بنجاح`);
       } else {
@@ -2364,7 +2442,8 @@
           subType,
           packInfo,
           weightGrams,
-          notes
+          notes,
+          updatedAt: Date.now()
         });
         showToast(`تمت إضافة "${name}" إلى مخزون البيت`);
       }
@@ -2857,7 +2936,8 @@
           subType: inferred.subType || '',
           packInfo: inferred.packInfo || `بالـ ${inferred.unit}`,
           weightGrams: inferred.weightGrams || 1000,
-          notes: 'أضيف وصُنف تلقائياً عبر جيمناي AI'
+          notes: 'أضيف وصُنف تلقائياً عبر جيمناي AI',
+          updatedAt: Date.now()
         };
         inventory.unshift(newItem);
         learnBarcodePattern(barcode, newItem.name, newItem.category, newItem.unit, newItem);
@@ -2946,9 +3026,374 @@
     }
 
 
+    // ============================================================================
+    // FIREBASE CLOUD SYNC (REALTIME DB + FIRESTORE SMART MERGE - V1.4)
+    // ============================================================================
+    const FIREBASE_CONFIG = {
+      apiKey: "AIzaSyDSepENeS5grnLxypt_qesvoeRvM74I2xc",
+      authDomain: "maga9y-d6913.firebaseapp.com",
+      projectId: "maga9y-d6913",
+      storageBucket: "maga9y-d6913.firebasestorage.app",
+      messagingSenderId: "103083957987",
+      appId: "1:103083957987:web:3b7e80fc890fdcc8bf6fd6",
+      measurementId: "G-RJRG26G4LL"
+    };
+
+    const CLOUD_DOC_ID = 'maga9y_home_main';
+    const STORAGE_KEY_TOMBSTONES = 'maqadina_cloud_tombstones_v1';
+
+    let cloudTombstones = { items: {}, barcodes: {}, lastFullResetAt: 0 };
+    let firestoreDb = null;
+    let realtimeDb = null;
+    let isCloudVerifiedActive = false;
+    let isInitialCloudPullDone = false;
+    let isApplyingRemoteSnapshot = false;
+    let cloudPushDebounceTimer = null;
+    let lastSyncTimestampLabel = 'في انتظار الفحص...';
+
+    function getDeviceTypeName() {
+      const ua = navigator.userAgent || '';
+      if (/Android|iPhone|iPad|iPod|Mobile/i.test(ua)) return 'جوال (Mobile)';
+      return 'كمبيوتر (PC)';
+    }
+
+    function loadCloudTombstones() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY_TOMBSTONES);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          cloudTombstones = {
+            items: parsed.items || {},
+            barcodes: parsed.barcodes || {},
+            lastFullResetAt: parsed.lastFullResetAt || 0
+          };
+        }
+      } catch (e) {}
+    }
+
+    function recordDeletedTombstone(itemId, barcode) {
+      const now = Date.now();
+      if (itemId) cloudTombstones.items[itemId] = now;
+      if (barcode) cloudTombstones.barcodes[barcode] = now;
+    }
+
+    function setCloudStatusUI(active, detailMsg) {
+      isCloudVerifiedActive = !!active;
+      const btn = document.getElementById('cloudHeaderStatusBtn');
+      const dot = document.getElementById('cloudHeaderDot');
+      const txt = document.getElementById('cloudHeaderStatusText');
+      const mDot = document.getElementById('cloudModalDot');
+      const mBadge = document.getElementById('cloudModalStateBadge');
+      const mDetail = document.getElementById('cloudModalDetailText');
+      const lastSyncEl = document.getElementById('cloudLastSyncTime');
+      const devEl = document.getElementById('cloudCurrentDeviceLabel');
+
+      if (active) {
+        if (btn) btn.className = 'text-[10px] sm:text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 font-extrabold flex items-center gap-1.5 shrink-0 transition';
+        if (dot) dot.className = 'w-2 h-2 rounded-full bg-emerald-400';
+        if (txt) txt.textContent = 'السحابة مفعّلة';
+        if (mDot) mDot.className = 'w-3 h-3 rounded-full bg-emerald-400 shrink-0';
+        if (mBadge) {
+          mBadge.textContent = 'السحابة مفعّلة وشغالة ✓';
+          mBadge.className = 'text-sm font-extrabold text-emerald-400';
+        }
+      } else {
+        if (btn) btn.className = 'text-[10px] sm:text-xs px-2.5 py-0.5 rounded-full bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 font-extrabold flex items-center gap-1.5 shrink-0 transition';
+        if (dot) dot.className = 'w-2 h-2 rounded-full bg-rose-400';
+        if (txt) txt.textContent = 'غير متصل بالسحابة';
+        if (mDot) mDot.className = 'w-3 h-3 rounded-full bg-rose-400 shrink-0';
+        if (mBadge) {
+          mBadge.textContent = 'السحابة غير متصلة';
+          mBadge.className = 'text-sm font-extrabold text-rose-400';
+        }
+      }
+
+      if (mDetail && detailMsg) mDetail.textContent = detailMsg;
+      if (lastSyncEl) lastSyncEl.textContent = lastSyncTimestampLabel;
+      if (devEl) devEl.textContent = getDeviceTypeName();
+    }
+
+    function smartMergeStateWithCloud(remoteData) {
+      if (!remoteData || typeof remoteData !== 'object') return false;
+
+      const remTomb = remoteData.tombstones || {};
+      const mergedItemsTomb = Object.assign({}, cloudTombstones.items || {});
+      Object.entries(remTomb.items || {}).forEach(([k, ts]) => {
+        if (!mergedItemsTomb[k] || ts > mergedItemsTomb[k]) mergedItemsTomb[k] = ts;
+      });
+      const mergedBarcodesTomb = Object.assign({}, cloudTombstones.barcodes || {});
+      Object.entries(remTomb.barcodes || {}).forEach(([k, ts]) => {
+        if (!mergedBarcodesTomb[k] || ts > mergedBarcodesTomb[k]) mergedBarcodesTomb[k] = ts;
+      });
+      const mergedResetAt = Math.max(cloudTombstones.lastFullResetAt || 0, remTomb.lastFullResetAt || 0);
+
+      cloudTombstones = {
+        items: mergedItemsTomb,
+        barcodes: mergedBarcodesTomb,
+        lastFullResetAt: mergedResetAt
+      };
+
+      const remoteInv = Array.isArray(remoteData.inventory) ? remoteData.inventory : [];
+      const invByKey = new Map();
+
+      const considerInventoryItem = (item) => {
+        if (!item || !item.name) return;
+        const itemTs = item.updatedAt || 1;
+        const delIdTs = cloudTombstones.items[item.id] || 0;
+        const delBcTs = item.barcode ? (cloudTombstones.barcodes[item.barcode] || 0) : 0;
+        if (itemTs <= delIdTs || itemTs <= delBcTs || (mergedResetAt > 0 && itemTs < mergedResetAt)) {
+          return;
+        }
+        const key = item.barcode || item.id;
+        const existing = invByKey.get(key);
+        if (!existing || itemTs >= (existing.updatedAt || 0)) {
+          invByKey.set(key, Object.assign({}, item, { updatedAt: itemTs }));
+        }
+      };
+
+      inventory.forEach(considerInventoryItem);
+      remoteInv.forEach(considerInventoryItem);
+      inventory = Array.from(invByKey.values()).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+
+      const remoteShop = Array.isArray(remoteData.shoppingList) ? remoteData.shoppingList : [];
+      const shopByKey = new Map();
+
+      const considerShopItem = (entry) => {
+        if (!entry || !entry.name) return;
+        const entryTs = entry.updatedAt || 1;
+        const delIdTs = cloudTombstones.items[entry.id] || 0;
+        if (entryTs <= delIdTs || (mergedResetAt > 0 && entryTs < mergedResetAt)) {
+          return;
+        }
+        const key = entry.barcode || entry.id;
+        const existing = shopByKey.get(key);
+        if (!existing || entryTs >= (existing.updatedAt || 0)) {
+          shopByKey.set(key, Object.assign({}, entry, { updatedAt: entryTs }));
+        }
+      };
+
+      shoppingList.forEach(considerShopItem);
+      remoteShop.forEach(considerShopItem);
+      shoppingList = Array.from(shopByKey.values());
+
+      if (remoteData.aiMemory) {
+        const remBc = remoteData.aiMemory.learnedBarcodes || {};
+        Object.entries(remBc).forEach(([bc, info]) => {
+          const loc = aiMemory.learnedBarcodes[bc];
+          if (!loc || (info.hits || 0) >= (loc.hits || 0)) {
+            aiMemory.learnedBarcodes[bc] = info;
+          }
+        });
+        aiMemory.learnedKeywords = Object.assign({}, remoteData.aiMemory.learnedKeywords || {}, aiMemory.learnedKeywords || {});
+        aiMemory.scanCount = Math.max(aiMemory.scanCount || 0, remoteData.aiMemory.scanCount || 0);
+        saveAiMemory();
+      }
+
+      isApplyingRemoteSnapshot = true;
+      saveAppState(true);
+      updateSummaryStats();
+      renderInventoryView();
+      renderSimulatorBarcodes();
+      renderShoppingList();
+      renderBarcodeLabelsCatalog();
+      isApplyingRemoteSnapshot = false;
+      return true;
+    }
+
+    function buildSyncPayload() {
+      return {
+        inventory: JSON.parse(JSON.stringify(inventory)),
+        shoppingList: JSON.parse(JSON.stringify(shoppingList)),
+        tombstones: JSON.parse(JSON.stringify(cloudTombstones)),
+        aiMemory: {
+          learnedBarcodes: aiMemory.learnedBarcodes || {},
+          learnedKeywords: aiMemory.learnedKeywords || {},
+          scanCount: aiMemory.scanCount || 0
+        },
+        lastUpdatedBy: getDeviceTypeName(),
+        updatedAt: Date.now()
+      };
+    }
+
+    function initFirebaseSmartSync() {
+      loadCloudTombstones();
+
+      if (!window.firebase) {
+        setCloudStatusUI(false, 'تعذر تحميل مكتبة Firebase في هذه النافذة');
+        return;
+      }
+
+      try {
+        if (!firebase.apps || firebase.apps.length === 0) {
+          firebase.initializeApp(FIREBASE_CONFIG);
+        }
+        if (firebase.firestore) firestoreDb = firebase.firestore();
+        if (firebase.database) realtimeDb = firebase.database();
+
+        subscribeToBothDatabases();
+      } catch (e) {
+        setCloudStatusUI(false, 'تعذر تهيئة الاتصال السحابي');
+      }
+    }
+
+    function subscribeToBothDatabases() {
+      let rtdbWorking = false;
+      let firestoreWorking = false;
+
+      // 1. Realtime Database Listener & Connection Check
+      if (realtimeDb) {
+        try {
+          const rtRef = realtimeDb.ref('maga9y_smart_sync/' + CLOUD_DOC_ID);
+          realtimeDb.ref('.info/connected').on('value', (snap) => {
+            if (snap && snap.val() === true) {
+              rtdbWorking = true;
+              lastSyncTimestampLabel = new Date().toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+              setCloudStatusUI(true, 'متصل بقاعدة البيانات الفورية (Realtime DB) ومتزامن بين الجوال والكمبيوتر');
+            }
+          });
+
+          rtRef.once('value').then((snap) => {
+            if (snap && snap.exists()) {
+              smartMergeStateWithCloud(snap.val());
+            }
+            isInitialCloudPullDone = true;
+            rtdbWorking = true;
+            lastSyncTimestampLabel = new Date().toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            setCloudStatusUI(true, 'المزامنة السحابية مفعّلة وشغالة بنجاح');
+            pushMergedStateToCloud();
+          }).catch(() => {});
+
+          rtRef.on('value', (snap) => {
+            if (snap && snap.exists()) {
+              smartMergeStateWithCloud(snap.val());
+              isInitialCloudPullDone = true;
+              lastSyncTimestampLabel = new Date().toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+              setCloudStatusUI(true, 'المزامنة السحابية مفعّلة وشغالة بنجاح');
+            }
+          });
+        } catch (e) {}
+      }
+
+      // 2. Firestore Listener & Connection Check
+      if (firestoreDb) {
+        try {
+          const docRef = firestoreDb.collection('maga9y_smart_sync').doc(CLOUD_DOC_ID);
+          docRef.get().then((docSnap) => {
+            if (docSnap && docSnap.exists) {
+              smartMergeStateWithCloud(docSnap.data());
+            }
+            isInitialCloudPullDone = true;
+            firestoreWorking = true;
+            lastSyncTimestampLabel = new Date().toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            setCloudStatusUI(true, 'المزامنة السحابية مفعّلة وشغالة (Firestore + Realtime DB)');
+            pushMergedStateToCloud();
+          }).catch(() => {
+            isInitialCloudPullDone = true;
+            if (!rtdbWorking) {
+              setCloudStatusUI(false, 'تأكد من تفعيل قواعد القراءة/الكتابة في Firebase أو من الاتصال بالإنترنت');
+            }
+          });
+
+          docRef.onSnapshot((docSnap) => {
+            if (docSnap && docSnap.exists) {
+              smartMergeStateWithCloud(docSnap.data());
+              isInitialCloudPullDone = true;
+              firestoreWorking = true;
+              lastSyncTimestampLabel = new Date().toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+              setCloudStatusUI(true, 'المزامنة السحابية مفعّلة وشغالة بنجاح');
+            }
+          }, () => {
+            if (!rtdbWorking && !firestoreWorking) {
+              setCloudStatusUI(false, 'تعذر الوصول لقاعدة البيانات السحابية');
+            }
+          });
+        } catch (e) {}
+      }
+    }
+
+    function scheduleSmartCloudPush() {
+      if (isApplyingRemoteSnapshot) return;
+      if (cloudPushDebounceTimer) clearTimeout(cloudPushDebounceTimer);
+      cloudPushDebounceTimer = setTimeout(() => {
+        pushMergedStateToCloud();
+      }, 400);
+    }
+
+    async function pushMergedStateToCloud() {
+      const payload = buildSyncPayload();
+      let pushedAny = false;
+
+      if (realtimeDb) {
+        try {
+          await realtimeDb.ref('maga9y_smart_sync/' + CLOUD_DOC_ID).set(payload);
+          pushedAny = true;
+        } catch (e) {}
+      }
+
+      if (firestoreDb) {
+        try {
+          await firestoreDb.collection('maga9y_smart_sync').doc(CLOUD_DOC_ID).set(payload, { merge: true });
+          pushedAny = true;
+        } catch (e) {}
+      }
+
+      if (pushedAny) {
+        lastSyncTimestampLabel = new Date().toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        setCloudStatusUI(true, 'تم الحفظ والمزامنة السحابية بين الجوال والكمبيوتر ✓');
+      }
+    }
+
+    function openCloudSyncModal() {
+      const modal = document.getElementById('cloudSyncModal');
+      if (!modal) return;
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function closeCloudSyncModal() {
+      const modal = document.getElementById('cloudSyncModal');
+      if (!modal) return;
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    async function verifyFirebaseConnectionNow() {
+      let ok = false;
+      const testStamp = Date.now();
+
+      if (realtimeDb) {
+        try {
+          const snap = await realtimeDb.ref('maga9y_smart_sync/' + CLOUD_DOC_ID).once('value');
+          if (snap && snap.exists()) smartMergeStateWithCloud(snap.val());
+          await realtimeDb.ref('maga9y_smart_sync/' + CLOUD_DOC_ID + '/lastPingAt').set(testStamp);
+          ok = true;
+        } catch (e) {}
+      }
+
+      if (firestoreDb) {
+        try {
+          const snap = await firestoreDb.collection('maga9y_smart_sync').doc(CLOUD_DOC_ID).get();
+          if (snap && snap.exists) smartMergeStateWithCloud(snap.data());
+          await firestoreDb.collection('maga9y_smart_sync').doc(CLOUD_DOC_ID).set(buildSyncPayload(), { merge: true });
+          ok = true;
+        } catch (e) {}
+      }
+
+      if (ok) {
+        lastSyncTimestampLabel = new Date().toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        setCloudStatusUI(true, 'فحص الاتصال ناجح: السحابة مفعّلة وتقرأ وتكتب بنجاح ✓');
+        showToast('السحابة مفعّلة وشغالة بنجاح!');
+      } else {
+        setCloudStatusUI(false, 'فشل الفحص: تأكد من قواعد الأمان (Rules) في Firebase أو من الاتصال بالإنترنت');
+        showToast('تعذر الاتصال بالسحابة حالياً');
+      }
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
       loadAiMemory();
       loadAppState();
+      initFirebaseSmartSync();
       updateSummaryStats();
       renderInventoryView();
       renderSimulatorBarcodes();
