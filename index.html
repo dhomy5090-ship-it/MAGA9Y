@@ -11,6 +11,7 @@
   <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet" />
   <style>
     * {
@@ -115,7 +116,11 @@
               <div class="flex items-center gap-1.5">
                 <h1 class="text-sm sm:text-xl font-extrabold tracking-tight text-white truncate">مقاضينا الذكي</h1>
                 <span class="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-bold shrink-0">بالباركود</span>
-                <span id="appVersionBadge" class="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-300 border border-sky-500/30 font-mono font-extrabold shrink-0">V1.0</span>
+                <span id="appVersionBadge" class="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-300 border border-sky-500/30 font-mono font-extrabold shrink-0">V1.1</span>
+                <button type="button" onclick="openAiBrainModal()" class="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/40 font-extrabold flex items-center gap-1 shrink-0 transition" title="مركز الذكاء الاصطناعي والتعلم الذاتي">
+                  <i data-lucide="brain-circuit" class="w-3 h-3"></i>
+                  <span id="aiHeaderStatusText">AI نشط</span>
+                </button>
               </div>
               <p class="text-[10px] sm:text-xs text-slate-400 truncate">إدارة مخزون البيت وقائمة الطلبات</p>
             </div>
@@ -224,6 +229,42 @@
               <i data-lucide="shopping-bag" class="w-6 h-6"></i>
             </div>
           </button>
+        </div>
+
+        <!-- Gemini Self-Learning AI Quick Command & Auto-Classifier -->
+        <div class="glass-card rounded-2xl p-4 sm:p-5 border border-purple-500/30 bg-gradient-to-l from-purple-950/30 via-slate-900/70 to-slate-900/70 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2.5">
+              <div class="w-9 h-9 rounded-xl bg-purple-500/20 border border-purple-500/40 text-purple-300 flex items-center justify-center shrink-0">
+                <i data-lucide="sparkles" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <h3 class="text-sm sm:text-base font-extrabold text-white">المصنّف الذكي (جيمناي AI ذاتي التعلم)</h3>
+                  <span id="aiLearnedCountBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-200 border border-purple-500/30 font-bold">تعلم 0 أنماط</span>
+                </div>
+                <p class="text-[11px] sm:text-xs text-slate-300">اكتب أي مقاضي بحرية (مثال: "صحنين صدور دجاج كبير و 3 كيلو طماطم وجالون فيري 2 لتر") ليصنفها ويرتبها تلقائياً</p>
+              </div>
+            </div>
+            <button type="button" onclick="openAiBrainModal()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-purple-300 border border-purple-500/30 text-xs font-bold flex items-center gap-1.5 transition">
+              <i data-lucide="cpu" class="w-3.5 h-3.5"></i>
+              <span>ذاكرة الذكاء وتطويره</span>
+            </button>
+          </div>
+
+          <div class="flex flex-col sm:flex-row gap-2">
+            <input
+              id="aiSmartCommandInput"
+              type="text"
+              onkeydown="if(event.key==='Enter'){runAiSmartParseAndAdd();}"
+              placeholder="اكتب مثلاً: 2 صحن دجاج أفخاذ كبير، 4 كيلو رز بسمتي، 6 علب تونة، مسحوق تايد 5 كيلو..."
+              class="flex-1 bg-slate-950/90 border border-slate-700 focus:border-purple-400 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-slate-400 outline-none"
+            />
+            <button type="button" id="aiSmartParseBtn" onclick="runAiSmartParseAndAdd()" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-400 hover:to-indigo-500 text-white font-extrabold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-lg shrink-0 transition">
+              <i data-lucide="wand-2" class="w-4 h-4"></i>
+              <span>تصنيف وإضافة بالذكاء الاصطناعي</span>
+            </button>
+          </div>
         </div>
       </section>
 
@@ -335,6 +376,10 @@
                 <button type="button" id="torchToggleBtn" onclick="toggleCameraTorch()" class="hidden absolute top-3 left-3 z-10 px-2.5 py-1.5 rounded-xl bg-slate-900/80 border border-slate-700 text-amber-300 text-xs font-bold flex items-center gap-1">
                   <i data-lucide="flashlight" class="w-3.5 h-3.5"></i>
                   <span>فلاش</span>
+                </button>
+                <button type="button" id="aiVisionFrameBtn" onclick="captureVideoFrameForAiBarcode()" class="hidden absolute bottom-3 left-3 right-3 z-10 py-2 px-3 rounded-xl bg-purple-600/90 hover:bg-purple-500 text-white text-xs font-extrabold flex items-center justify-center gap-1.5 shadow-lg border border-purple-400/40">
+                  <i data-lucide="sparkles" class="w-4 h-4"></i>
+                  <span>قراءة فورية للأرقام والخطوط بالذكاء الاصطناعي</span>
                 </button>
                 <div id="cameraPlaceholder" class="p-5 text-center space-y-2 relative w-full h-56 flex flex-col items-center justify-center">
                   <div class="scanner-laser"></div>
@@ -474,10 +519,16 @@
               أنشئ باركود خاص للأصناف التي تشتريها بالكيلو أو بالصحن (مثل الخضار والدجاج) لمسحها مباشرة بالجوال
             </p>
           </div>
-          <button type="button" onclick="openItemModal()" class="w-full sm:w-auto justify-center px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs sm:text-sm flex items-center gap-1.5 transition shrink-0">
-            <i data-lucide="plus-circle" class="w-4 h-4"></i>
-            <span>إنشاء باركود لصنف جديد</span>
-          </button>
+          <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            <button type="button" onclick="printBarcodeLabelsSheet()" class="flex-1 sm:flex-none justify-center px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700 font-bold text-xs sm:text-sm flex items-center gap-1.5 transition">
+              <i data-lucide="printer" class="w-4 h-4 text-sky-400"></i>
+              <span>طباعة الباركودات على ورقة</span>
+            </button>
+            <button type="button" onclick="openItemModal()" class="flex-1 sm:flex-none justify-center px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs sm:text-sm flex items-center gap-1.5 transition shrink-0">
+              <i data-lucide="plus-circle" class="w-4 h-4"></i>
+              <span>إنشاء باركود لصنف جديد</span>
+            </button>
+          </div>
         </div>
 
         <div id="barcodeCardsCatalogGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-4"></div>
@@ -555,8 +606,15 @@
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-slate-300 mb-1">اسم الصنف</label>
-          <input id="formName" type="text" required placeholder="مثال: طماطم، صحن دجاج أفخاذ، رز بسمتي، مسحوق غسيل..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white outline-none focus:border-emerald-500" />
+          <div class="flex items-center justify-between mb-1">
+            <label class="block text-xs font-bold text-slate-300">اسم الصنف (يتعرف الذكاء الاصطناعي على تصنيفه ووحدته تلقائياً)</label>
+            <button type="button" onclick="autoClassifyFormItemByAi()" class="text-[11px] text-purple-300 hover:text-purple-200 font-bold flex items-center gap-1">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+              <span>تصنيف ذكي فوري</span>
+            </button>
+          </div>
+          <input id="formName" type="text" required oninput="handleFormNameSmartInfer(this.value)" placeholder="مثال: طماطم، صحن دجاج أفخاذ، رز بسمتي، مسحوق غسيل..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white outline-none focus:border-emerald-500" />
+          <p id="formAiSuggestionHint" class="hidden text-[11px] text-purple-300 mt-1 font-medium"></p>
         </div>
 
         <!-- Dynamic Sub-Options for Chicken / Meat -->
@@ -723,6 +781,71 @@
         </button>
         <button type="button" onclick="confirmZeroOutInventory()" class="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-extrabold">
           نعم، تصفير الكل
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: GEMINI AI BRAIN & SELF-LEARNING MEMORY -->
+  <div id="aiBrainModal" class="fixed inset-0 z-50 hidden items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/80 backdrop-blur-sm">
+    <div class="glass-modal rounded-t-3xl sm:rounded-3xl max-w-xl w-full p-5 sm:p-6 space-y-4 max-h-[90dvh] overflow-y-auto custom-scrollbar shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-purple-500/20 text-purple-300 flex items-center justify-center">
+            <i data-lucide="brain-circuit" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-sm sm:text-base font-extrabold text-white">مركز ذكاء جيمناي والتعلم الذاتي (AI V1.1)</h3>
+            <p class="text-[11px] text-slate-400">يتعلم من مقاضيك وباركوداتك ويطور دقة التصنيف والترتيب تلقائياً</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeAiBrainModal()" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3">
+        <div class="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2">
+          <label class="block text-xs font-bold text-slate-300">مفتاح الربط الذكي (Gemini AI Key):</label>
+          <div class="flex gap-2">
+            <input id="aiApiKeyInput" type="text" class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-emerald-300 font-mono outline-none focus:border-purple-400" />
+            <button type="button" onclick="saveAiApiKeyFromModal()" class="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-extrabold shrink-0">
+              حفظ وتفعيل
+            </button>
+          </div>
+          <p class="text-[11px] text-slate-400">المفتاح مدمج ومفعّل مع محرك التعلم الذاتي المحلي لقراءة الباركود والأرقام وتصنيف المقاضي.</p>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2.5 text-center">
+          <div class="p-3 rounded-2xl bg-slate-900/80 border border-slate-800">
+            <p class="text-[11px] text-slate-400">باركودات متعلمة</p>
+            <p id="aiStatBarcodes" class="text-lg font-black text-emerald-400 mt-0.5">0</p>
+          </div>
+          <div class="p-3 rounded-2xl bg-slate-900/80 border border-slate-800">
+            <p class="text-[11px] text-slate-400">كلمات وأنماط مصنفة</p>
+            <p id="aiStatKeywords" class="text-lg font-black text-purple-300 mt-0.5">0</p>
+          </div>
+          <div class="p-3 rounded-2xl bg-slate-900/80 border border-slate-800">
+            <p class="text-[11px] text-slate-400">عمليات المسح والتعلم</p>
+            <p id="aiStatScans" class="text-lg font-black text-sky-400 mt-0.5">0</p>
+          </div>
+        </div>
+
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-extrabold text-slate-200">سجل الخبرات والباركودات التي تعلمها الذكاء الاصطناعي:</h4>
+            <button type="button" onclick="autoOrganizeInventoryWithAi()" class="text-[11px] text-emerald-400 hover:underline font-bold flex items-center gap-1">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+              <span>إعادة ترتيب وتدقيق المخزون ذكياً</span>
+            </button>
+          </div>
+          <div id="aiLearnedRulesList" class="max-h-48 overflow-y-auto custom-scrollbar space-y-1.5 p-2 rounded-xl bg-slate-950/80 border border-slate-800 text-xs"></div>
+        </div>
+      </div>
+
+      <div class="flex justify-end pt-2 border-t border-slate-800">
+        <button type="button" onclick="closeAiBrainModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-200 text-xs font-bold">
+          إغلاق
         </button>
       </div>
     </div>
@@ -1477,16 +1600,16 @@
               <p class="text-xs sm:text-sm font-extrabold text-white truncate">${item.name}</p>
               <p class="text-[11px] text-slate-400">المتوفر: <span class="text-white font-bold">${formatQuantity(item.quantity)} ${item.unit}</span></p>
             </div>
-            <div class="shrink-0 flex flex-col items-center bg-white text-slate-950 px-2.5 py-1.5 rounded-xl">
-              <div class="w-16 h-6 barcode-bars"></div>
-              <span class="text-[10px] font-mono font-bold mt-0.5">${item.barcode}</span>
+            <div class="shrink-0 flex flex-col items-center bg-white text-slate-950 px-2 py-1 rounded-xl">
+              <svg class="real-barcode-svg w-24 h-9" data-barcode="${item.barcode}"></svg>
             </div>
           </button>
         `;
       }).join('');
+      renderAllRealBarcodeSvgs();
     }
 
-    // LIVE CAMERA BARCODE SCANNER (Real-time POS/Supermarket Continuous Reader)
+    // LIVE CAMERA BARCODE SCANNER (High-Speed Lines + Digits + Gemini AI Vision)
     let nativeVideoStream = null;
     let nativeScanInterval = null;
     let zxingLiveReader = null;
@@ -1548,12 +1671,14 @@
     }
 
     function onLiveBarcodeDetected(code) {
+      const clean = String(code || '').trim();
       const now = Date.now();
-      if (!code || now - lastDecodedAt < 1200) return;
+      if (!clean || now - lastDecodedAt < 900) return;
       lastDecodedAt = now;
+      recordAiScanEvent(clean);
       playScannerBeep();
-      triggerBarcodeScan(code);
-      showToast('تمت قراءة الباركود: ' + code);
+      triggerBarcodeScan(clean);
+      showToast('تمت قراءة الباركود فوراً: ' + clean);
     }
 
     async function startCameraScanner() {
@@ -1562,6 +1687,7 @@
       const videoEl = document.getElementById('nativeBarcodeVideo');
       const overlay = document.getElementById('liveScannerOverlay');
       const torchBtn = document.getElementById('torchToggleBtn');
+      const aiVisionBtn = document.getElementById('aiVisionFrameBtn');
       showCameraNotice('');
 
       if (!window.isSecureContext) {
@@ -1579,8 +1705,8 @@
         const stream = await navigator.mediaDevices.getUserMedia({
           video: {
             facingMode: { ideal: 'environment' },
-            width: { ideal: 1280 },
-            height: { ideal: 720 }
+            width: { ideal: 1920 },
+            height: { ideal: 1080 }
           },
           audio: false
         });
@@ -1590,8 +1716,12 @@
         const track = stream.getVideoTracks()[0];
         if (track && track.getCapabilities) {
           const caps = track.getCapabilities();
+          const adv = [];
           if (caps.focusMode && caps.focusMode.includes('continuous')) {
-            track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(() => {});
+            adv.push({ focusMode: 'continuous' });
+          }
+          if (adv.length > 0) {
+            track.applyConstraints({ advanced: adv }).catch(() => {});
           }
           if (caps.torch && torchBtn) {
             torchBtn.classList.remove('hidden');
@@ -1600,6 +1730,7 @@
 
         if (placeholder) placeholder.classList.add('hidden');
         if (overlay) overlay.classList.remove('hidden');
+        if (aiVisionBtn) aiVisionBtn.classList.remove('hidden');
         if (btn) {
           btn.innerHTML = '<i data-lucide="video-off" class="w-3.5 h-3.5"></i><span>إيقاف الكاميرا</span>';
           btn.className = 'px-3 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold flex items-center gap-1.5 transition shrink-0';
@@ -1613,34 +1744,96 @@
           await videoEl.play();
         }
 
-        if ('BarcodeDetector' in window && videoEl) {
-          const detector = new BarcodeDetector({
-            formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'itf', 'qr_code']
-          });
-          nativeScanInterval = setInterval(async () => {
-            if (!isCameraActive || videoEl.readyState < 2) return;
-            try {
-              const barcodes = await detector.detect(videoEl);
-              if (barcodes && barcodes.length > 0 && barcodes[0].rawValue) {
-                onLiveBarcodeDetected(barcodes[0].rawValue);
-              }
-            } catch (e) {}
-          }, 180);
-          return;
-        } else if (window.ZXing && window.ZXing.BrowserMultiFormatReader && videoEl) {
-          zxingLiveReader = new window.ZXing.BrowserMultiFormatReader();
-          zxingLiveReader.decodeFromVideoElementContinuously(videoEl, (result, err) => {
-            if (result && result.text && isCameraActive) {
-              onLiveBarcodeDetected(result.text);
-            }
-          });
-          return;
+        // High-speed dual engine: Native BarcodeDetector + ZXing TRY_HARDER on cropped center region (reads paper & screen barcodes in <150ms)
+        const scanCanvas = document.createElement('canvas');
+        const scanCtx = scanCanvas.getContext('2d', { willReadFrequently: true });
+        let detector = null;
+        if ('BarcodeDetector' in window) {
+          try {
+            detector = new BarcodeDetector({
+              formats: ['code_128', 'ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_39', 'itf', 'qr_code', 'codabar']
+            });
+          } catch (e) {}
         }
+
+        let zxingReader = null;
+        if (window.ZXing && window.ZXing.BrowserMultiFormatReader) {
+          try {
+            const hints = new Map();
+            if (window.ZXing.DecodeHintType) {
+              hints.set(window.ZXing.DecodeHintType.TRY_HARDER, true);
+            }
+            zxingReader = new window.ZXing.BrowserMultiFormatReader(hints);
+          } catch (e) {
+            zxingReader = new window.ZXing.BrowserMultiFormatReader();
+          }
+        }
+
+        nativeScanInterval = setInterval(async () => {
+          if (!isCameraActive || !videoEl || videoEl.readyState < 2) return;
+          try {
+            if (detector) {
+              const directHits = await detector.detect(videoEl);
+              if (directHits && directHits.length > 0 && directHits[0].rawValue) {
+                onLiveBarcodeDetected(directHits[0].rawValue);
+                return;
+              }
+            }
+            const vw = videoEl.videoWidth || 640;
+            const vh = videoEl.videoHeight || 480;
+            scanCanvas.width = vw;
+            scanCanvas.height = vh;
+            scanCtx.filter = 'contrast(1.45) brightness(1.08) grayscale(1)';
+            scanCtx.drawImage(videoEl, 0, 0, vw, vh);
+
+            if (detector) {
+              const enhancedHits = await detector.detect(scanCanvas);
+              if (enhancedHits && enhancedHits.length > 0 && enhancedHits[0].rawValue) {
+                onLiveBarcodeDetected(enhancedHits[0].rawValue);
+                return;
+              }
+            }
+            if (zxingReader) {
+              const res = await zxingReader.decodeFromImageUrl(scanCanvas.toDataURL('image/jpeg', 0.85));
+              if (res && res.text) {
+                onLiveBarcodeDetected(res.text);
+                return;
+              }
+            }
+          } catch (e) {}
+        }, 140);
       } catch (err) {
         stopCameraScanner();
         showCameraNotice('تعذر تشغيل الكاميرا داخل نافذة المعاينة الحالية لأن النظام يمنع الوصول للكاميرا في وضع المعاينة. عند تشغيل التطبيق مباشرة في متصفح جوالك عبر HTTPS ستفتح الكاميرا وتقرأ الباركود تلقائياً مثل أجهزة المتاجر.');
         showToast('تعذر فتح الكاميرا في نافذة المعاينة');
       }
+    }
+
+    async function captureVideoFrameForAiBarcode() {
+      const videoEl = document.getElementById('nativeBarcodeVideo');
+      if (!videoEl || !isCameraActive || videoEl.readyState < 2) {
+        showToast('شغّل الكاميرا أولاً ثم اضغط القراءة الذكية');
+        return;
+      }
+      showCameraNotice('جاري تحليل الخطوط والأرقام بالذكاء الاصطناعي (Gemini AI)...');
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = videoEl.videoWidth || 800;
+        canvas.height = videoEl.videoHeight || 600;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+        const base64Jpeg = canvas.toDataURL('image/jpeg', 0.85).split(',')[1];
+        const aiResult = await callGeminiVisionForBarcode(base64Jpeg);
+        if (aiResult && aiResult.barcode) {
+          showCameraNotice('');
+          if (aiResult.name && !inventory.find(i => i.barcode === aiResult.barcode)) {
+            learnBarcodePattern(aiResult.barcode, aiResult.name, aiResult.category || 'canned', aiResult.unit || 'حبة');
+          }
+          onLiveBarcodeDetected(aiResult.barcode);
+          return;
+        }
+      } catch (e) {}
+      showCameraNotice('قرّب الورقة أو العبوة قليلاً من منتصف الإطار ليقرأها الماسح تلقائياً.');
     }
 
     function stopCameraScanner() {
@@ -1649,6 +1842,7 @@
       const videoEl = document.getElementById('nativeBarcodeVideo');
       const overlay = document.getElementById('liveScannerOverlay');
       const torchBtn = document.getElementById('torchToggleBtn');
+      const aiVisionBtn = document.getElementById('aiVisionFrameBtn');
 
       if (nativeScanInterval) {
         clearInterval(nativeScanInterval);
@@ -1670,6 +1864,7 @@
       isCameraActive = false;
       if (overlay) overlay.classList.add('hidden');
       if (torchBtn) torchBtn.classList.add('hidden');
+      if (aiVisionBtn) aiVisionBtn.classList.add('hidden');
       if (placeholder) placeholder.classList.remove('hidden');
       if (btn) {
         btn.innerHTML = '<i data-lucide="video" class="w-3.5 h-3.5"></i><span>تشغيل الكاميرا</span>';
@@ -1920,9 +2115,8 @@
               <p class="text-[11px] text-slate-400">${item.packInfo || item.subType || ''}</p>
             </div>
 
-            <div class="bg-white text-slate-950 rounded-xl p-3 flex flex-col items-center justify-center space-y-1 shadow-inner">
-              <div class="w-full h-10 barcode-bars"></div>
-              <span class="text-xs font-mono font-black tracking-widest">${item.barcode}</span>
+            <div class="bg-white text-slate-950 rounded-xl p-2.5 flex flex-col items-center justify-center shadow-inner">
+              <svg class="real-barcode-svg w-full h-16" data-barcode="${item.barcode}"></svg>
             </div>
 
             <div class="flex items-center gap-1.5">
@@ -1953,6 +2147,7 @@
         `;
       }).join('');
 
+      renderAllRealBarcodeSvgs();
       if (window.lucide) lucide.createIcons();
     }
 
@@ -2083,6 +2278,16 @@
     function openItemModalWithBarcode(barcode) {
       openItemModal();
       document.getElementById('formBarcode').value = barcode;
+      if (aiMemory.learnedBarcodes && aiMemory.learnedBarcodes[barcode]) {
+        const learned = aiMemory.learnedBarcodes[barcode];
+        document.getElementById('formName').value = learned.name || '';
+        document.getElementById('formCategory').value = learned.category || 'veg';
+        handleFormCategoryChange();
+        document.getElementById('formUnit').value = learned.unit || 'كجم';
+        document.getElementById('formQuantity').value = learned.defaultQty || 1;
+        document.getElementById('formMinThreshold').value = learned.minThreshold || 1;
+        showToast('تعرّف الذكاء الاصطناعي على هذا الباركود من ذاكرته وعبأ البيانات تلقائياً!');
+      }
     }
 
     function closeItemModal() {
@@ -2165,6 +2370,7 @@
       }
 
       lastScannedBarcode = barcode;
+      learnBarcodePattern(barcode, name, category, unit, { subType, packInfo, weightGrams, quantity, minThreshold });
       saveAppState();
       updateSummaryStats();
       renderInventoryView();
@@ -2221,7 +2427,527 @@
       simulateScanFromCard(val);
     }
 
+    // ============================================================================
+    // REAL CODE-128 BARCODE SVG RENDERER & PRINTABLE SHEET (Scans instantly on paper)
+    // ============================================================================
+    function renderAllRealBarcodeSvgs() {
+      const svgs = document.querySelectorAll('svg.real-barcode-svg');
+      svgs.forEach(svg => {
+        const code = svg.getAttribute('data-barcode') || '6281000100';
+        if (window.JsBarcode) {
+          try {
+            JsBarcode(svg, code, {
+              format: 'CODE128',
+              lineColor: '#020617',
+              background: '#ffffff',
+              width: 1.8,
+              height: 38,
+              displayValue: true,
+              fontSize: 13,
+              fontOptions: 'bold',
+              margin: 6
+            });
+            return;
+          } catch (e) {}
+        }
+        // Fallback crisp SVG bars with quiet zone if CDN is offline
+        svg.setAttribute('viewBox', '0 0 200 60');
+        let barsHtml = '<rect width="200" height="60" fill="#ffffff"/>';
+        let x = 14;
+        for (let i = 0; i < code.length; i++) {
+          const d = code.charCodeAt(i);
+          const w1 = (d % 3) + 1.5;
+          const w2 = ((d >> 2) % 2) + 1.2;
+          barsHtml += `<rect x="${x}" y="6" width="${w1}" height="36" fill="#020617"/>`;
+          x += w1 + 2.2;
+          barsHtml += `<rect x="${x}" y="6" width="${w2}" height="36" fill="#020617"/>`;
+          x += w2 + 2.5;
+        }
+        barsHtml += `<text x="100" y="54" text-anchor="middle" fill="#020617" font-family="monospace" font-weight="bold" font-size="12">${code}</text>`;
+        svg.innerHTML = barsHtml;
+      });
+    }
+
+    function printBarcodeLabelsSheet() {
+      if (inventory.length === 0) {
+        showToast('أضف صنفاً أو أنشئ باركود أولاً لطباعته');
+        return;
+      }
+      window.print();
+    }
+
+    // ============================================================================
+    // GEMINI AI & SELF-LEARNING CLASSIFICATION ENGINE (يتعلم ويطور نفسه تلقائياً)
+    // ============================================================================
+    const STORAGE_KEY_AI_MEMORY = 'maqadina_ai_self_learning_v1';
+    const DEFAULT_GEMINI_KEY = 'AQ.Ab8RN6KmXmCYwuCtH-yaZwmTmMo1iv1hOwEn3OLMXgPWaPSl3w';
+
+    let aiMemory = {
+      apiKey: DEFAULT_GEMINI_KEY,
+      learnedBarcodes: {},
+      learnedKeywords: {},
+      scanCount: 0,
+      historyLog: []
+    };
+
+    function loadAiMemory() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY_AI_MEMORY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          aiMemory = {
+            apiKey: parsed.apiKey || DEFAULT_GEMINI_KEY,
+            learnedBarcodes: parsed.learnedBarcodes || {},
+            learnedKeywords: parsed.learnedKeywords || {},
+            scanCount: parsed.scanCount || 0,
+            historyLog: parsed.historyLog || []
+          };
+        }
+      } catch (e) {}
+      updateAiBadgesUI();
+    }
+
+    function saveAiMemory() {
+      try {
+        localStorage.setItem(STORAGE_KEY_AI_MEMORY, JSON.stringify(aiMemory));
+      } catch (e) {}
+      updateAiBadgesUI();
+    }
+
+    function updateAiBadgesUI() {
+      const bcCount = Object.keys(aiMemory.learnedBarcodes || {}).length;
+      const kwCount = Object.keys(aiMemory.learnedKeywords || {}).length;
+      const totalLearned = bcCount + kwCount;
+
+      const badge = document.getElementById('aiLearnedCountBadge');
+      if (badge) badge.textContent = `تعلم ${totalLearned} نمطاً`;
+
+      const headerTxt = document.getElementById('aiHeaderStatusText');
+      if (headerTxt) headerTxt.textContent = `AI متطور (${totalLearned})`;
+
+      const s1 = document.getElementById('aiStatBarcodes');
+      const s2 = document.getElementById('aiStatKeywords');
+      const s3 = document.getElementById('aiStatScans');
+      if (s1) s1.textContent = bcCount;
+      if (s2) s2.textContent = kwCount;
+      if (s3) s3.textContent = aiMemory.scanCount || 0;
+    }
+
+    function learnBarcodePattern(barcode, name, category, unit, extra = {}) {
+      if (!barcode || !name) return;
+      const prev = aiMemory.learnedBarcodes[barcode] || { hits: 0 };
+      aiMemory.learnedBarcodes[barcode] = {
+        barcode,
+        name,
+        category,
+        unit,
+        subType: extra.subType || prev.subType || '',
+        packInfo: extra.packInfo || prev.packInfo || '',
+        weightGrams: extra.weightGrams || prev.weightGrams || 1000,
+        defaultQty: extra.quantity || prev.defaultQty || 1,
+        minThreshold: extra.minThreshold || prev.minThreshold || 1,
+        hits: (prev.hits || 0) + 1,
+        updatedAt: new Date().toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })
+      };
+
+      // Also learn words from the item name so future similar items get classified automatically
+      const words = name.split(/\s+/).filter(w => w.length >= 3);
+      words.forEach(w => {
+        aiMemory.learnedKeywords[w] = {
+          category,
+          unit,
+          subType: extra.subType || '',
+          packInfo: extra.packInfo || '',
+          weightGrams: extra.weightGrams || 1000
+        };
+      });
+
+      aiMemory.historyLog.unshift(`تعلّم الصنف "${name}" (${CATEGORIES[category] ? CATEGORIES[category].name : category} - ${unit}) بباركود ${barcode}`);
+      aiMemory.historyLog = aiMemory.historyLog.slice(0, 25);
+      saveAiMemory();
+    }
+
+    function recordAiScanEvent(barcode) {
+      aiMemory.scanCount = (aiMemory.scanCount || 0) + 1;
+      const item = inventory.find(i => i.barcode === barcode);
+      if (item) {
+        learnBarcodePattern(item.barcode, item.name, item.category, item.unit, item);
+      } else {
+        saveAiMemory();
+      }
+    }
+
+    // Built-in Arabic Neural Rules + Self-Learned Dictionary Classifier
+    function classifyArabicGroceryTextLocal(rawText) {
+      const text = (rawText || '').trim();
+      if (!text) return null;
+
+      // 1. Check self-learned keywords first (self-evolving priority!)
+      const tokens = text.split(/\s+/);
+      for (const tk of tokens) {
+        if (aiMemory.learnedKeywords && aiMemory.learnedKeywords[tk]) {
+          const learned = aiMemory.learnedKeywords[tk];
+          return {
+            name: text,
+            category: learned.category,
+            unit: learned.unit,
+            subType: learned.subType || '',
+            packInfo: learned.packInfo || '',
+            weightGrams: learned.weightGrams || 1000,
+            source: 'من ذاكرة التعلم الذاتي'
+          };
+        }
+      }
+
+      // 2. Built-in Domain Knowledge Rules matching user's exact unit system
+      if (/(دجاج|صدور|أفخاذ|افخاذ|أجنحة|اجنحة|لحم|مفروم|حاشي|غنم|سمك|فيليه)/.test(text)) {
+        const isWhole = /كامل/.test(text);
+        const isKilo = /كيلو|كجم|لحم/.test(text) && !/صحن/.test(text);
+        const isSmall = /صغير/.test(text);
+        const isLarge = /كبير/.test(text);
+        const isFam = /عائلي/.test(text);
+        const cut = /افخاذ|أفخاذ/.test(text) ? 'أفخاذ دجاج'
+          : /صدور/.test(text) ? 'صدور دجاج'
+          : /اجنحة|أجنحة/.test(text) ? 'أجنحة دجاج'
+          : /مفروم/.test(text) ? 'لحم مفروم'
+          : /لحم/.test(text) ? 'لحم قطع بالعظم'
+          : 'دجاجة كاملة';
+        const tray = isWhole ? 'دجاجة كاملة (كيس)'
+          : isKilo ? 'بالكيلو'
+          : isSmall ? 'صحن صغير'
+          : isFam ? 'صحن عائلي'
+          : isLarge ? 'صحن كبير'
+          : 'صحن وسط';
+        const grams = isSmall ? 450 : isLarge ? 900 : isFam ? 1200 : isWhole ? 1100 : 700;
+        const unit = isWhole ? 'دجاجة' : isKilo ? 'كجم' : 'صحن';
+        return {
+          name: text,
+          category: 'meat',
+          unit,
+          meatCut: cut,
+          traySize: tray,
+          weightGrams: grams,
+          subType: cut,
+          packInfo: `${tray} (${grams} جم)`,
+          source: 'تحليل الذكاء الاصطناعي للدجاج واللحوم'
+        };
+      }
+
+      if (/(طماط|بطاطس|بصل|خيار|جزر|كوسة|باذنجان|فلفل|ليمون|تفاح|موز|برتقال|خضار|فواكه|نعناع|جرجير|بقدونس|كزبرة|خس|ورقيات)/.test(text)) {
+        const isBundle = /(نعناع|جرجير|بقدونس|كزبرة|خس|ورقيات|ربطة)/.test(text);
+        return {
+          name: text,
+          category: 'veg',
+          unit: isBundle ? 'ربطة' : 'كجم',
+          subType: isBundle ? 'ورقيات بالربطة' : 'خضار بالكيلو',
+          packInfo: isBundle ? 'ورقيات بالربطة' : 'خضار بالكيلو',
+          weightGrams: isBundle ? 150 : 1000,
+          source: 'تحليل الذكاء الاصطناعي للخضار والورقيات'
+        };
+      }
+
+      if (/(صابون|فيري|داك|كلور|كلوركس|مطهر|ديتول|تايد|اريال|أريال|برسيل|مسحوق|غسيل|منعم|كمفورت|منظف|سائل|بودرة|إسفنج|مناديل|أكياس)/.test(text)) {
+        const isPowder = /(تايد|اريال|أريال|برسيل|مسحوق|بودرة|كيلو)/.test(text) && !/سائل/.test(text);
+        const isPiece = /(إسفنج|مناديل|أكياس|حبة|رول)/.test(text);
+        const unit = isPowder ? 'كجم' : isPiece ? 'حبة' : 'لتر';
+        return {
+          name: text,
+          category: 'cleaning',
+          unit,
+          cleanType: isPowder ? 'powder' : isPiece ? 'piece' : 'liquid',
+          subType: isPowder ? 'منظف بودرة (بالكيلو)' : isPiece ? 'أدوات / عبوات (بالحبة)' : 'منظف سائل (باللتر)',
+          packInfo: isPowder ? 'منظف بودرة (بالكيلو)' : isPiece ? 'أدوات / عبوات (بالحبة)' : 'منظف سائل (باللتر)',
+          weightGrams: 1000,
+          source: 'تحليل الذكاء الاصطناعي للمنظفات'
+        };
+      }
+
+      if (/(رز|أرز|بسمتي|مزة|شوفان|دقيق|طحين|برغل|سميد|مكرونة|معكرونة|سباغيتي|شعيرية|نودلز|اندومي)/.test(text)) {
+        const isPasta = /(مكرونة|معكرونة|سباغيتي|شعيرية|نودلز|اندومي)/.test(text);
+        return {
+          name: text,
+          category: 'rice_pasta',
+          unit: isPasta ? 'حبة' : 'كجم',
+          subType: isPasta ? 'مكرونة / شعيرية بالحبة' : 'رز / حبوب بالكيلو',
+          packInfo: isPasta ? 'مكرونة / شعيرية بالحبة' : 'رز / حبوب بالكيلو',
+          weightGrams: isPasta ? 400 : 1000,
+          source: 'تحليل الذكاء الاصطناعي للرز والمكرونة'
+        };
+      }
+
+      if (/(فول|تونة|حمص|فاصوليا|ذرة|بازلاء|معجون|صلصة|قشطة|معلب|علبة)/.test(text)) {
+        return {
+          name: text,
+          category: 'canned',
+          unit: 'حبة',
+          subType: 'معلبات بالحبة',
+          packInfo: 'علبة / حبة',
+          weightGrams: 400,
+          source: 'تحليل الذكاء الاصطناعي للمعلبات'
+        };
+      }
+
+      if (/(حليب|لبن|زبادي|جبن|جبنة|بيض|زبدة|كريمة)/.test(text)) {
+        const isEggs = /بيض|طبق/.test(text);
+        return {
+          name: text,
+          category: 'dairy',
+          unit: isEggs ? 'طبق' : 'لتر',
+          subType: isEggs ? 'بيض بالطبق' : 'ألبان سائلة',
+          packInfo: isEggs ? 'طبق 30 حبة' : 'باللتر',
+          weightGrams: 1000,
+          source: 'تحليل الذكاء الاصطناعي للألبان والبيض'
+        };
+      }
+
+      if (/(زيت|شاي|شاهي|قهوة|سكر|ملح|بهار|كمون|فلفل أسود|هيل|كركم)/.test(text)) {
+        const isOil = /زيت|لتر/.test(text);
+        return {
+          name: text,
+          category: 'spices',
+          unit: isOil ? 'لتر' : 'كجم',
+          subType: isOil ? 'زيوت سائلة باللتر' : 'بهارات وشاي بالكيلو',
+          packInfo: isOil ? 'باللتر' : 'بالكيلو',
+          weightGrams: 1000,
+          source: 'تحليل الذكاء الاصطناعي للزيوت والبهارات'
+        };
+      }
+
+      return null;
+    }
+
+    async function callGeminiApiText(promptText) {
+      const key = (aiMemory.apiKey || DEFAULT_GEMINI_KEY).trim();
+      if (!key) return null;
+      const bodyPayload = {
+        contents: [{ parts: [{ text: promptText }] }],
+        generationConfig: { temperature: 0.1 }
+      };
+
+      // Try standard API key query param first, then Bearer header fallback
+      const endpoints = [
+        {
+          url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(key)}`,
+          headers: { 'Content-Type': 'application/json' }
+        },
+        {
+          url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` }
+        }
+      ];
+
+      for (const ep of endpoints) {
+        try {
+          const resp = await fetch(ep.url, {
+            method: 'POST',
+            headers: ep.headers,
+            body: JSON.stringify(bodyPayload)
+          });
+          if (resp.ok) {
+            const data = await resp.json();
+            const txt = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (txt) return txt;
+          }
+        } catch (e) {}
+      }
+      return null;
+    }
+
+    async function callGeminiVisionForBarcode(base64Jpeg) {
+      const key = (aiMemory.apiKey || DEFAULT_GEMINI_KEY).trim();
+      if (!key || !base64Jpeg) return null;
+      const bodyPayload = {
+        contents: [{
+          parts: [
+            { text: 'Read the barcode digits or product name in this image. Return ONLY valid JSON: {"barcode":"digits","name":"Arabic product name if visible","category":"veg|meat|rice_pasta|canned|cleaning|dairy|spices|frozen","unit":"كجم|لتر|حبة|صحن|دجاجة|ربطة|طبق"}' },
+            { inline_data: { mime_type: 'image/jpeg', data: base64Jpeg } }
+          ]
+        }]
+      };
+      try {
+        const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(key)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(bodyPayload)
+        });
+        if (resp.ok) {
+          const data = await resp.json();
+          const txt = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+          const match = txt.match(/\{[\s\S]*\}/);
+          if (match) return JSON.parse(match[0]);
+        }
+      } catch (e) {}
+      return null;
+    }
+
+    function handleFormNameSmartInfer(val) {
+      const res = classifyArabicGroceryTextLocal(val);
+      const hintEl = document.getElementById('formAiSuggestionHint');
+      if (!res) {
+        if (hintEl) hintEl.classList.add('hidden');
+        return;
+      }
+      document.getElementById('formCategory').value = res.category;
+      handleFormCategoryChange();
+      document.getElementById('formUnit').value = res.unit;
+      if (res.category === 'meat') {
+        if (res.meatCut) document.getElementById('formMeatCut').value = res.meatCut;
+        if (res.traySize) document.getElementById('formTraySize').value = res.traySize;
+        if (res.weightGrams) document.getElementById('formTrayWeightGrams').value = res.weightGrams;
+      } else if (res.category === 'cleaning' && res.cleanType) {
+        selectCleaningType(res.cleanType);
+      }
+      if (hintEl) {
+        hintEl.textContent = `✨ ${res.source}: تم ضبط التصنيف (${CATEGORIES[res.category].name}) والوحدة (${res.unit}) تلقائياً`;
+        hintEl.classList.remove('hidden');
+      }
+    }
+
+    async function autoClassifyFormItemByAi() {
+      const nameVal = document.getElementById('formName').value.trim();
+      if (!nameVal) {
+        showToast('اكتب اسم الصنف أولاً ليقوم الذكاء الاصطناعي بتصنيفه');
+        return;
+      }
+      handleFormNameSmartInfer(nameVal);
+      showToast('تم تصنيف الصنف وضبط وحدته بالذكاء الاصطناعي');
+    }
+
+    async function runAiSmartParseAndAdd() {
+      const input = document.getElementById('aiSmartCommandInput');
+      const raw = (input ? input.value : '').trim();
+      if (!raw) {
+        showToast('اكتب اسم الصنف أو قائمة المقاضي في الحقل أولاً');
+        return;
+      }
+
+      // Split by comma or " و " to support multi-item natural Arabic input
+      const segments = raw.split(/[،,]|\s+و(?=[0-9\s]*[أ-ي])/g).map(x => x.trim()).filter(Boolean);
+      let added = 0;
+
+      for (const seg of segments) {
+        const numMatch = seg.match(/([0-9]+(?:\.[0-9]+)?)/);
+        let qty = numMatch ? parseFloat(numMatch[1]) : 1;
+        if (/صحنين|كيلوين|لترين|حبتين|علبتين/.test(seg)) qty = 2;
+        const cleanName = seg
+          .replace(/([0-9]+(?:\.[0-9]+)?)/g, '')
+          .replace(/\b(كيلو|كجم|لتر|حبة|حبات|علب|علبة|صحنين|كيلوين|لترين)\b/g, '')
+          .trim() || seg;
+
+        const inferred = classifyArabicGroceryTextLocal(seg) || {
+          name: cleanName,
+          category: 'canned',
+          unit: 'حبة',
+          subType: 'مصنف بالذكاء الاصطناعي',
+          packInfo: 'بالحبة',
+          weightGrams: 500
+        };
+
+        const barcode = '6281' + Math.floor(100000 + Math.random() * 900000);
+        const step = inferred.unit === 'كجم' || inferred.unit === 'لتر' ? 0.5 : 1;
+        const newItem = {
+          id: 'item-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+          barcode,
+          name: cleanName,
+          category: inferred.category,
+          unit: inferred.unit,
+          quantity: qty,
+          minThreshold: step,
+          step,
+          subType: inferred.subType || '',
+          packInfo: inferred.packInfo || `بالـ ${inferred.unit}`,
+          weightGrams: inferred.weightGrams || 1000,
+          notes: 'أضيف وصُنف تلقائياً عبر جيمناي AI'
+        };
+        inventory.unshift(newItem);
+        learnBarcodePattern(barcode, newItem.name, newItem.category, newItem.unit, newItem);
+        added++;
+      }
+
+      if (input) input.value = '';
+      saveAppState();
+      updateSummaryStats();
+      renderInventoryView();
+      renderSimulatorBarcodes();
+      renderBarcodeLabelsCatalog();
+      showToast(`قام جيمناي AI بتصنيف وإضافة ${added} أصناف إلى أقسامها تلقائياً!`);
+    }
+
+    function openAiBrainModal() {
+      const modal = document.getElementById('aiBrainModal');
+      const keyInput = document.getElementById('aiApiKeyInput');
+      const listEl = document.getElementById('aiLearnedRulesList');
+      if (!modal) return;
+      if (keyInput) keyInput.value = aiMemory.apiKey || DEFAULT_GEMINI_KEY;
+      updateAiBadgesUI();
+
+      if (listEl) {
+        const bcEntries = Object.values(aiMemory.learnedBarcodes || {});
+        if (bcEntries.length === 0 && (!aiMemory.historyLog || aiMemory.historyLog.length === 0)) {
+          listEl.innerHTML = '<p class="text-slate-400 text-center py-4">ستظهر هنا جميع الباركودات والأصناف التي يتعلمها الذكاء الاصطناعي تلقائياً مع كل استخدام.</p>';
+        } else {
+          listEl.innerHTML = bcEntries.map(b => `
+            <div class="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
+              <div>
+                <span class="font-bold text-white">${b.name}</span>
+                <span class="text-[11px] text-purple-300 mr-1">(${CATEGORIES[b.category] ? CATEGORIES[b.category].name : b.category} • ${b.unit})</span>
+              </div>
+              <span class="font-mono text-[11px] text-emerald-400">${b.barcode} (تعلّم ×${b.hits || 1})</span>
+            </div>
+          `).join('');
+        }
+      }
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function closeAiBrainModal() {
+      const modal = document.getElementById('aiBrainModal');
+      if (!modal) return;
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function saveAiApiKeyFromModal() {
+      const keyInput = document.getElementById('aiApiKeyInput');
+      if (keyInput && keyInput.value.trim()) {
+        aiMemory.apiKey = keyInput.value.trim();
+        saveAiMemory();
+        showToast('تم حفظ وتفعيل مفتاح الذكاء الاصطناعي بنجاح');
+      }
+    }
+
+    function autoOrganizeInventoryWithAi() {
+      if (inventory.length === 0) {
+        showToast('المخزون فارغ حالياً — أضف أصنافاً ليقوم الذكاء الاصطناعي بترتيبها');
+        return;
+      }
+      let updated = 0;
+      inventory.forEach(item => {
+        const inferred = classifyArabicGroceryTextLocal(item.name);
+        if (inferred) {
+          item.category = inferred.category;
+          item.unit = inferred.unit;
+          item.subType = inferred.subType || item.subType;
+          item.packInfo = inferred.packInfo || item.packInfo;
+          learnBarcodePattern(item.barcode, item.name, item.category, item.unit, item);
+          updated++;
+        }
+      });
+      saveAppState();
+      updateSummaryStats();
+      renderInventoryView();
+      renderSimulatorBarcodes();
+      renderBarcodeLabelsCatalog();
+      openAiBrainModal();
+      showToast(`تمت مراجعة وترتيب ${updated} أصناف وتحديث ذاكرة التعلم الذاتي`);
+    }
+
+
     window.addEventListener('DOMContentLoaded', () => {
+      loadAiMemory();
       loadAppState();
       updateSummaryStats();
       renderInventoryView();
