@@ -12,7 +12,7 @@
   <link id="pwaIconLink" rel="icon" type="image/png" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%2310b981'/%3E%3Cstop offset='100%25' stop-color='%230d9488'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='128' height='128' rx='28' fill='url(%23g)'/%3E%3Cpath d='M36 42V36H46M92 42V36H82M36 86V92H46M92 86V92H82M48 48V80M60 48V80M70 48V80M82 48V80' stroke='white' stroke-width='7' stroke-linecap='round' fill='none'/%3E%3C/svg%3E" />
   <link id="pwaAppleTouchIcon" rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%2310b981'/%3E%3Cstop offset='100%25' stop-color='%230d9488'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='128' height='128' rx='28' fill='url(%23g)'/%3E%3Cpath d='M36 42V36H46M92 42V36H82M36 86V92H46M92 86V92H82M48 48V80M60 48V80M70 48V80M82 48V80' stroke='white' stroke-width='7' stroke-linecap='round' fill='none'/%3E%3C/svg%3E" />
   <link id="pwaManifestLink" rel="manifest" href="data:application/manifest+json,{}" />
-  <title>مقاضينا الذكي V2.0 | نظام إدارة الأصناف والباركود</title>
+  <title>مقاضينا الذكي V3.6 | نظام إدارة الأصناف والباركود والتحليل الذكي</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
@@ -51,11 +51,28 @@
         padding-bottom: 40px;
       }
     }
+    * {
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    html {
+      scroll-behavior: smooth;
+    }
     .glass-card {
-      background: rgba(30, 41, 59, 0.65);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
+      background: rgba(15, 23, 42, 0.90);
       border: 1px solid rgba(255, 255, 255, 0.08);
+      transform: translateZ(0);
+      contain: layout style;
+      transition: transform 0.14s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.14s ease;
+    }
+    .glass-modal {
+      transform: translateZ(0);
+      will-change: transform, opacity;
+      animation: modalSmoothIn 0.16s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    @keyframes modalSmoothIn {
+      from { opacity: 0; transform: translate3d(0, 12px, 0) scale(0.985); }
+      to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
     }
     .glass-modal {
       background: rgba(15, 23, 42, 0.96);
@@ -138,6 +155,9 @@
         gap: 8mm 5mm !important;
         width: 100% !important;
       }
+      .barcode-label-card.print-skip {
+        display: none !important;
+      }
       .barcode-label-card {
         background: #ffffff !important;
         border: 1.5px solid #cbd5e1 !important;
@@ -173,24 +193,26 @@
     <!-- Responsive Top Header (Clean 2-Row Layout: Zero Overlap on Mobile & PC) -->
     <header class="sticky top-0 z-30 glass-card border-b border-slate-800/80 px-3 sm:px-6 py-2.5 sm:py-3">
       <div class="max-w-7xl mx-auto space-y-2.5">
-        <!-- Row 1: Clear App Logo + Title + Version on Right | Quick Action Buttons on Left -->
-        <div class="flex items-center justify-between gap-2">
+        <!-- Row 1: Clear App Logo + Title + Version (Never covered by buttons on mobile!) -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
           <!-- Brand Logo & Title -->
-          <div class="flex items-center gap-2.5 min-w-0">
-            <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-900/40 shrink-0">
-              <i data-lucide="scan-barcode" class="w-5 h-5 sm:w-6 sm:h-6 text-white"></i>
-            </div>
-            <div class="min-w-0">
-              <div class="flex items-center gap-1.5">
-                <h1 class="text-base sm:text-xl font-extrabold tracking-tight text-white whitespace-nowrap">مقاضينا الذكي</h1>
-                <span id="appVersionBadge" class="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-300 border border-sky-500/30 font-mono font-extrabold shrink-0">V2.0</span>
+          <div class="flex items-center justify-between gap-2.5 min-w-0">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-900/40 shrink-0">
+                <i data-lucide="scan-barcode" class="w-5 h-5 sm:w-6 sm:h-6 text-white"></i>
               </div>
-              <p class="text-[10px] sm:text-xs text-slate-400 truncate hidden sm:block">إدارة مخزون البيت وقائمة الطلبات بالباركود</p>
+              <div class="min-w-0">
+                <div class="flex items-center gap-1.5">
+                  <h1 class="text-base sm:text-xl font-extrabold tracking-tight text-white whitespace-nowrap">مقاضينا الذكي</h1>
+                  <span id="appVersionBadge" class="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-300 border border-sky-500/30 font-mono font-extrabold shrink-0">V3.6</span>
+                </div>
+                <p class="text-[10px] sm:text-xs text-slate-400 truncate">إدارة الأصناف وقائمة الطلبات بالباركود</p>
+              </div>
             </div>
           </div>
 
-          <!-- Action Buttons (Compact & Uniform on Mobile, Labeled on PC) -->
-          <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <!-- Action Buttons (Cleanly placed below title on mobile, right-aligned on PC) -->
+          <div class="grid grid-cols-4 sm:flex items-center gap-1.5 sm:gap-2 shrink-0">
             <button type="button" id="pwaInstallBtn" onclick="triggerPwaInstall()" class="h-9 px-2.5 sm:px-3 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 border border-sky-500/30 text-xs font-extrabold flex items-center justify-center gap-1.5 transition" title="تثبيت التطبيق على الجوال بدون حواف">
               <i data-lucide="smartphone" class="w-4 h-4 shrink-0"></i>
               <span class="hidden lg:inline">تثبيت بالجوال</span>
@@ -250,6 +272,10 @@
             <button type="button" id="tabBtn-labels" onclick="switchMainTab('labels')" class="px-3 py-1.5 rounded-xl text-xs lg:text-sm font-bold transition-all flex items-center justify-center gap-1.5 text-slate-300 hover:text-white">
               <i data-lucide="qr-code" class="w-4 h-4 shrink-0"></i>
               <span>باركود الأصناف</span>
+            </button>
+            <button type="button" id="tabBtn-analytics" onclick="switchMainTab('analytics')" class="px-3 py-1.5 rounded-xl text-xs lg:text-sm font-bold transition-all flex items-center justify-center gap-1.5 text-slate-300 hover:text-white">
+              <i data-lucide="bar-chart-3" class="w-4 h-4 shrink-0"></i>
+              <span>التحليل</span>
             </button>
           </nav>
         </div>
@@ -349,6 +375,19 @@
             <button type="button" id="aiSmartParseBtn" onclick="runAiSmartParseAndAdd()" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-400 hover:to-indigo-500 text-white font-extrabold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-lg shrink-0 transition">
               <i data-lucide="wand-2" class="w-4 h-4"></i>
               <span>تصنيف وإضافة بالذكاء الاصطناعي</span>
+            </button>
+          </div>
+
+          <!-- Deep AI Live Pantry Audit & Suggestions Strip -->
+          <div id="aiHomeAuditBox" class="rounded-xl bg-slate-950/75 border border-purple-500/25 p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div class="flex items-start gap-2">
+              <i data-lucide="shield-check" class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5"></i>
+              <p id="aiHomeAuditText" class="text-[11px] sm:text-xs text-slate-200 leading-relaxed">
+                الذكاء الاصطناعي يراقب الأصناف، يدقق الأسماء والوحدات، ويتعلم من كل عملية مسح.
+              </p>
+            </div>
+            <button type="button" onclick="runFullAiAuditAndFixAll()" class="px-3 py-1.5 rounded-lg bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 border border-purple-400/30 text-[11px] font-extrabold shrink-0 transition">
+              تدقيق وترتيب شامل بالـ AI
             </button>
           </div>
         </div>
@@ -553,6 +592,10 @@
               <i data-lucide="package-check" class="w-4 h-4"></i>
               <span>نقل المشتريات المحددة إلى مخزون البيت</span>
             </button>
+            <button type="button" onclick="aiAuditAndSortShoppingList()" class="px-3 py-2 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 text-purple-200 border border-purple-500/30 text-xs font-bold flex items-center gap-1.5 transition">
+              <i data-lucide="sparkles" class="w-4 h-4 text-purple-300"></i>
+              <span>ترتيب وتدقيق بالـ AI</span>
+            </button>
             <button type="button" onclick="copyShoppingListToClipboard()" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold flex items-center gap-1.5 transition">
               <i data-lucide="share-2" class="w-4 h-4 text-sky-400"></i>
               <span>نسخ للواتساب</span>
@@ -587,9 +630,9 @@
             </p>
           </div>
           <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-            <button type="button" onclick="printBarcodeLabelsSheet()" class="flex-1 sm:flex-none justify-center px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700 font-bold text-xs sm:text-sm flex items-center gap-1.5 transition">
-              <i data-lucide="printer" class="w-4 h-4 text-sky-400"></i>
-              <span>طباعة الباركودات على ورقة</span>
+            <button type="button" id="printBarcodesBtn" onclick="printBarcodeLabelsSheet()" class="flex-1 sm:flex-none justify-center px-3.5 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-extrabold text-xs sm:text-sm flex items-center gap-1.5 transition shadow-lg">
+              <i data-lucide="printer" class="w-4 h-4"></i>
+              <span id="printBarcodesBtnText">طباعة الباركودات على ورقة</span>
             </button>
             <button type="button" onclick="openItemModal()" class="flex-1 sm:flex-none justify-center px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs sm:text-sm flex items-center gap-1.5 transition shrink-0">
               <i data-lucide="plus-circle" class="w-4 h-4"></i>
@@ -598,12 +641,133 @@
           </div>
         </div>
 
+        <!-- Selective Barcode Printing Filter & Multi-Select Bar -->
+        <div class="print-hide glass-card rounded-2xl p-3 sm:p-4 space-y-2.5">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <p class="text-xs font-bold text-slate-300">اختر الباركودات التي تريد طباعتها (مثلاً: أغراض الثلاجة فقط أو الدولاب فقط) — واضغط على أي باركود لتكبيره ومسحه بوضوح:</p>
+            <div class="flex items-center gap-1.5">
+              <button type="button" onclick="selectAllBarcodesForPrint()" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-300 text-[11px] font-bold border border-slate-700">تحديد الكل</button>
+              <button type="button" onclick="clearBarcodesForPrint()" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-bold border border-slate-700">إلغاء التحديد</button>
+            </div>
+          </div>
+          <div id="labelsCategorySelectBar" class="flex items-center gap-1.5 overflow-x-auto pb-1"></div>
+        </div>
+
         <div id="barcodeCardsCatalogGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-4"></div>
       </section>
+
+      <!-- TAB 5: AI ANALYTICS DASHBOARD (#view-analytics) -->
+      <section id="view-analytics" class="hidden space-y-4 sm:space-y-5">
+        <!-- Header Banner -->
+        <div class="glass-card rounded-2xl p-4 sm:p-5 border border-purple-500/30 bg-gradient-to-l from-purple-950/35 via-slate-900/70 to-slate-900/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-2xl bg-purple-500/20 border border-purple-500/40 text-purple-300 flex items-center justify-center shrink-0">
+              <i data-lucide="bar-chart-3" class="w-6 h-6"></i>
+            </div>
+            <div>
+              <h2 class="text-base sm:text-lg font-extrabold text-white">أداة التحليل الذكي بالذكاء الاصطناعي</h2>
+              <p class="text-[11px] sm:text-xs text-slate-300">تحليل حي لأكثر الأصناف استهلاكاً، وأكثرها طلباً وشراءً بعلامة صح (✓)، وتصنيفها بالـ AI</p>
+            </div>
+          </div>
+          <button type="button" onclick="renderAnalyticsDashboard(true)" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-400 hover:to-indigo-500 text-white text-xs font-extrabold flex items-center justify-center gap-1.5 shadow-lg shrink-0 transition">
+            <i data-lucide="sparkles" class="w-4 h-4"></i>
+            <span>تحديث التحليل بالذكاء</span>
+          </button>
+        </div>
+
+        <!-- 3 Highlight Metric Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+          <div class="glass-card rounded-2xl p-4 flex items-center justify-between border border-rose-500/25">
+            <div class="min-w-0">
+              <p class="text-[11px] text-slate-400 font-bold">الأكثر استهلاكاً وسحباً</p>
+              <p id="anaTopConsumedName" class="text-base sm:text-lg font-black text-white truncate mt-1">لا توجد بيانات بعد</p>
+              <p id="anaTopConsumedSub" class="text-[11px] text-rose-300 mt-0.5">يبدأ الحساب مع كل سحب</p>
+            </div>
+            <div class="w-11 h-11 rounded-2xl bg-rose-500/15 text-rose-400 flex items-center justify-center shrink-0">
+              <i data-lucide="flame" class="w-5 h-5"></i>
+            </div>
+          </div>
+
+          <div class="glass-card rounded-2xl p-4 flex items-center justify-between border border-emerald-500/25">
+            <div class="min-w-0">
+              <p class="text-[11px] text-slate-400 font-bold">الأكثر طلباً وشراءً (✓)</p>
+              <p id="anaTopPurchasedName" class="text-base sm:text-lg font-black text-white truncate mt-1">لا توجد بيانات بعد</p>
+              <p id="anaTopPurchasedSub" class="text-[11px] text-emerald-400 mt-0.5">يُحسب عند وضع صح في المقاضي</p>
+            </div>
+            <div class="w-11 h-11 rounded-2xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center shrink-0">
+              <i data-lucide="check-check" class="w-5 h-5"></i>
+            </div>
+          </div>
+
+          <div class="glass-card rounded-2xl p-4 flex items-center justify-between border border-purple-500/25">
+            <div class="min-w-0">
+              <p class="text-[11px] text-slate-400 font-bold">مشتريات مكتملة ومصنفة بالـ AI</p>
+              <p id="anaTotalPurchasedCount" class="text-2xl font-black text-purple-300 mt-1">0</p>
+              <p id="anaTotalAiCountSub" class="text-[11px] text-slate-400 mt-0.5">0 أصناف مصنفة ذكياً</p>
+            </div>
+            <div class="w-11 h-11 rounded-2xl bg-purple-500/15 text-purple-300 flex items-center justify-center shrink-0">
+              <i data-lucide="brain-circuit" class="w-5 h-5"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI Executive Summary Insight Box -->
+        <div class="glass-card rounded-2xl p-4 border border-sky-500/30 bg-sky-950/20 flex items-start gap-3">
+          <div class="w-9 h-9 rounded-xl bg-sky-500/20 text-sky-300 flex items-center justify-center shrink-0">
+            <i data-lucide="lightbulb" class="w-5 h-5"></i>
+          </div>
+          <div class="space-y-1">
+            <h3 class="text-xs sm:text-sm font-extrabold text-sky-300">ملخص وتوصية الذكاء الاصطناعي:</h3>
+            <p id="anaAiNarrativeText" class="text-xs text-slate-200 leading-relaxed">
+              ابدأ باستخدام التطبيق (إضافة بالذكاء الاصطناعي، سحب من المخزون، أو وضع صح على المقاضي المشتراة) ليقوم الذكاء الاصطناعي ببناء تحليل دقيق لعادات الاستهلاك في بيتك.
+            </p>
+          </div>
+        </div>
+
+        <!-- Detailed Ranking Grids -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <!-- Most Consumed Items -->
+          <div class="glass-card rounded-2xl p-4 sm:p-5 space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+              <h3 class="text-sm sm:text-base font-extrabold text-white flex items-center gap-2">
+                <i data-lucide="trending-down" class="w-4 h-4 text-rose-400"></i>
+                <span>أكثر المنتجات استهلاكاً</span>
+              </h3>
+              <span class="text-[11px] text-slate-400">حسب مرات السحب والكمية</span>
+            </div>
+            <div id="anaConsumedList" class="space-y-2.5"></div>
+          </div>
+
+          <!-- Most Ordered & Purchased Items (✓) -->
+          <div class="glass-card rounded-2xl p-4 sm:p-5 space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+              <h3 class="text-sm sm:text-base font-extrabold text-white flex items-center gap-2">
+                <i data-lucide="shopping-bag" class="w-4 h-4 text-emerald-400"></i>
+                <span>الأكثر طلباً وشراءً في المقاضي (✓)</span>
+              </h3>
+              <span class="text-[11px] text-slate-400">الطلب مقابل الشراء الفعلي</span>
+            </div>
+            <div id="anaPurchasedList" class="space-y-2.5"></div>
+          </div>
+        </div>
+
+        <!-- Category Distribution & AI-Classified Items -->
+        <div class="glass-card rounded-2xl p-4 sm:p-5 space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+            <h3 class="text-sm sm:text-base font-extrabold text-white flex items-center gap-2">
+              <i data-lucide="pie-chart" class="w-4 h-4 text-purple-300"></i>
+              <span>توزيع الأصناف والباركودات التي صُنفَت بالذكاء الاصطناعي</span>
+            </h3>
+            <span class="text-[11px] text-purple-300 font-bold">تحليل هيكلي</span>
+          </div>
+          <div id="anaCategoryDistributionGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5"></div>
+        </div>
+      </section>
+
     </main>
 
-    <!-- Native Mobile Bottom Navigation Bar (5 dedicated pages) -->
-    <nav class="md:hidden fixed bottom-0 inset-x-0 z-40 glass-modal border-t border-slate-800/90 px-1.5 pt-1.5 safe-bottom-nav grid grid-cols-5 gap-1 shadow-2xl">
+    <!-- Native Mobile Bottom Navigation Bar (6 dedicated pages including AI Analytics) -->
+    <nav class="md:hidden fixed bottom-0 inset-x-0 z-40 glass-modal border-t border-slate-800/90 px-1 pt-1.5 safe-bottom-nav grid grid-cols-6 gap-0.5 shadow-2xl">
       <button type="button" id="mobTabBtn-home" onclick="switchMainTab('home')" class="flex flex-col items-center justify-center py-1 px-1 rounded-xl text-emerald-400 bg-emerald-500/10 font-extrabold text-[10px] gap-0.5 transition">
         <i data-lucide="home" class="w-5 h-5"></i>
         <span>الرئيسية</span>
@@ -621,9 +785,13 @@
         <span>المقاضي</span>
         <span id="mobShoppingBadgeCount" class="absolute top-0.5 right-2 px-1.5 bg-amber-500 text-slate-950 rounded-full text-[9px] font-black">0</span>
       </button>
-      <button type="button" id="mobTabBtn-labels" onclick="switchMainTab('labels')" class="flex flex-col items-center justify-center py-1 px-1 rounded-xl text-slate-400 font-bold text-[10px] gap-0.5 transition">
-        <i data-lucide="qr-code" class="w-5 h-5"></i>
+      <button type="button" id="mobTabBtn-labels" onclick="switchMainTab('labels')" class="flex flex-col items-center justify-center py-1 px-0.5 rounded-xl text-slate-400 font-bold text-[9.5px] gap-0.5 transition">
+        <i data-lucide="qr-code" class="w-4 h-4"></i>
         <span>الباركودات</span>
+      </button>
+      <button type="button" id="mobTabBtn-analytics" onclick="switchMainTab('analytics')" class="flex flex-col items-center justify-center py-1 px-0.5 rounded-xl text-slate-400 font-bold text-[9.5px] gap-0.5 transition">
+        <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
+        <span>التحليل</span>
       </button>
     </nav>
   </div>
@@ -659,7 +827,7 @@
 
           <div>
             <label class="block text-xs font-bold text-slate-300 mb-1">التصنيف الرئيسي</label>
-            <select id="formCategory" onchange="handleFormCategoryChange()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-emerald-500">
+            <select id="formCategory" onchange="userManuallyLockedCategory = true; handleFormCategoryChange()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-emerald-500">
               <option value="veg">الخضار والفواكه (بالكيلو / الربطة)</option>
               <option value="meat">الدجاج واللحوم (صحن / دجاجة كاملة / أفخاذ)</option>
               <option value="rice_pasta">الرز (بالكيلو) والمكرونة (بالحبة)</option>
@@ -753,29 +921,66 @@
           </div>
         </div>
 
+        <!-- Editable AI Smart Unit Suggestion Pills -->
+        <div id="formAiUnitPillsWrap" class="space-y-2 p-3 rounded-2xl bg-purple-950/20 border border-purple-500/25">
+          <div class="flex items-center justify-between gap-2">
+            <p class="text-[11px] font-extrabold text-purple-300 flex items-center gap-1">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+              <span>الوحدات المقترحة بالذكاء الاصطناعي:</span>
+            </p>
+            <button type="button" id="toggleEditUnitsBtn" onclick="toggleAiUnitsEditMode()" class="px-2.5 py-1 rounded-lg bg-purple-500/20 hover:bg-purple-500/30 text-purple-200 border border-purple-400/30 text-[10px] font-extrabold flex items-center gap-1 transition">
+              <i data-lucide="pencil" class="w-3 h-3"></i>
+              <span>تعديل الوحدات</span>
+            </button>
+          </div>
+          <div id="formAiUnitPills" class="flex flex-wrap gap-1.5"></div>
+          <!-- Inline Editor for Adding / Modifying Suggested Units -->
+          <div id="aiUnitsEditorBox" class="hidden pt-2 border-t border-purple-500/20 space-y-2">
+            <p class="text-[10px] text-slate-300">اضغط (×) لحذف أي وحدة أعلاه، أو اضغط على اسمها لتعديلها، أو أضف وحدة جديدة:</p>
+            <div class="flex items-center gap-1.5">
+              <input id="newCustomUnitInput" type="text" placeholder="أضف وحدة (مثل: كرتون، كيس، شدة، علبة...)" onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomAiUnitFromInput();}" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white outline-none focus:border-purple-400" />
+              <button type="button" onclick="addCustomAiUnitFromInput()" class="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-extrabold shrink-0">
+                + إضافة
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div class="grid grid-cols-3 gap-2.5 sm:gap-3">
           <div>
             <label class="block text-[11px] sm:text-xs font-bold text-slate-300 mb-1">الوحدة</label>
-            <select id="formUnit" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-2.5 text-xs sm:text-sm text-white outline-none focus:border-emerald-500">
+            <select id="formUnit" onchange="updateMeatFieldsVisibility(); renderFormQuickQtyPills()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-2.5 text-xs sm:text-sm text-white outline-none focus:border-emerald-500">
               <option value="كجم">كيلو (كجم)</option>
+              <option value="جرام">جرام</option>
               <option value="لتر">لتر (سائل)</option>
+              <option value="مل">مل (سائل)</option>
               <option value="حبة">حبة / علبة</option>
               <option value="صحن">صحن</option>
               <option value="دجاجة">دجاجة كاملة</option>
               <option value="ربطة">ربطة</option>
               <option value="طبق">طبق</option>
+              <option value="علبة">علبة</option>
+              <option value="كيس">كيس</option>
+              <option value="كرتون">كرتون</option>
+              <option value="شدة">شدة</option>
             </select>
           </div>
 
           <div>
-            <label class="block text-[11px] sm:text-xs font-bold text-slate-300 mb-1">الكمية المضافة</label>
-            <input id="formQuantity" type="number" step="0.25" min="0" required value="1" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-2.5 text-sm text-white font-bold text-center outline-none focus:border-emerald-500" />
+            <label class="block text-[11px] sm:text-xs font-bold text-slate-300 mb-1">الكمية / الوزن</label>
+            <input id="formQuantity" type="number" step="any" min="0" required value="1" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-2.5 text-sm text-white font-bold text-center outline-none focus:border-emerald-500" />
           </div>
 
           <div>
             <label class="block text-[11px] sm:text-xs font-bold text-slate-300 mb-1">حد التنبيه</label>
-            <input id="formMinThreshold" type="number" step="0.25" min="0" required value="1" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-2.5 text-sm text-white font-bold text-center outline-none focus:border-emerald-500" />
+            <input id="formMinThreshold" type="number" step="any" min="0" required value="1" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-2.5 text-sm text-white font-bold text-center outline-none focus:border-emerald-500" />
           </div>
+        </div>
+
+        <!-- Quick-Tap Weight / Volume / Count Selector (From 100g/0.1 up to 10+ kg/L) -->
+        <div class="space-y-1.5">
+          <p class="text-[11px] text-slate-400 font-bold">اختيار سريع للوزن أو الكمية (أو اكتب أي رقم مفتوح بالأعلى):</p>
+          <div id="formQuickQtyPills" class="flex flex-wrap gap-1.5"></div>
         </div>
 
         <div>
@@ -862,7 +1067,7 @@
             <i data-lucide="brain-circuit" class="w-5 h-5"></i>
           </div>
           <div>
-            <h3 class="text-sm sm:text-base font-extrabold text-white">مركز ذكاء جيمناي والتعلم الذاتي (AI V2.0)</h3>
+            <h3 class="text-sm sm:text-base font-extrabold text-white">مركز ذكاء جيمناي والتعلم الذاتي (AI V3.6)</h3>
             <p class="text-[11px] text-slate-400">يتعلم من مقاضيك وباركوداتك ويطور دقة التصنيف والترتيب تلقائياً</p>
           </div>
         </div>
@@ -927,7 +1132,7 @@
             <i data-lucide="cloud" class="w-5 h-5"></i>
           </div>
           <div>
-            <h3 class="text-sm sm:text-base font-extrabold text-white">حالة السحابة (Firebase V2.0)</h3>
+            <h3 class="text-sm sm:text-base font-extrabold text-white">حالة السحابة (Firebase V3.6)</h3>
             <p class="text-[11px] text-slate-400">فحص جاهزية الربط والمزامنة التلقائية بين الجوال والكمبيوتر</p>
           </div>
         </div>
@@ -1027,7 +1232,7 @@
         <input type="hidden" id="catFormId" value="" />
         <div>
           <label class="block text-xs font-bold text-slate-300 mb-1">اسم التصنيف</label>
-          <input id="catFormName" type="text" required placeholder="مثال: المشروبات والعصائر، المخبوزات..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white outline-none focus:border-emerald-500" />
+          <input id="catFormName" type="text" required oninput="autoInferCategorySettingsByAi(this.value)" placeholder="مثال: المشروبات والعصائر، المخبوزات..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white outline-none focus:border-emerald-500" />
         </div>
         <div>
           <label class="block text-xs font-bold text-slate-300 mb-1">وصف الوحدة (اختياري)</label>
@@ -1126,6 +1331,98 @@
     </div>
   </div>
 
+  <!-- MODAL: INSTANT SCAN RESULT POPUP (Appears automatically after scanning a known barcode) -->
+  <div id="scannedItemPopupModal" class="fixed inset-0 z-50 hidden items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/80 backdrop-blur-sm">
+    <div class="glass-modal rounded-t-3xl sm:rounded-3xl max-w-lg w-full p-5 sm:p-6 space-y-4 max-h-[90dvh] overflow-y-auto custom-scrollbar shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+            <i data-lucide="scan-barcode" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-sm sm:text-base font-extrabold text-white">نتيجة مسح الباركود</h3>
+            <p id="scanPopupBarcodeNum" class="text-[11px] font-mono text-emerald-400 font-bold">000000</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeScannedItemPopup()" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div id="scanPopupBody" class="space-y-4"></div>
+    </div>
+  </div>
+
+  <!-- MODAL: SINGLE BARCODE FOCUS VIEW (For clean distraction-free scanning from iPad/Screen) -->
+  <div id="singleBarcodeFocusModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm">
+    <div class="glass-modal rounded-3xl max-w-md w-full p-5 sm:p-6 space-y-4 shadow-2xl border border-slate-700">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div>
+          <span id="focusBcCategory" class="text-[11px] font-bold text-emerald-400">التصنيف</span>
+          <h3 id="focusBcName" class="text-lg font-extrabold text-white mt-0.5">اسم الصنف</h3>
+          <p id="focusBcDetails" class="text-xs text-amber-300 font-bold mt-0.5"></p>
+        </div>
+        <button type="button" onclick="closeSingleBarcodeFocusModal()" class="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="bg-white rounded-2xl p-6 flex flex-col items-center justify-center shadow-inner">
+        <svg id="focusBcSvg" class="w-full h-28"></svg>
+      </div>
+
+      <p class="text-[11px] text-center text-slate-400">وجّه كاميرا الجوال نحو هذا الباركود المنفرد للقراءة الفورية بدون تشويش من باقي الأصناف</p>
+
+      <div class="flex items-center gap-2 pt-1">
+        <button type="button" onclick="printSingleFocusedBarcode()" class="flex-1 py-2.5 px-4 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 transition">
+          <i data-lucide="printer" class="w-4 h-4"></i>
+          <span>طباعة هذا الباركود فقط</span>
+        </button>
+        <button type="button" onclick="closeSingleBarcodeFocusModal()" class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs transition">
+          إغلاق
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: PRINT BARCODES SHEET PREVIEW (Works on ALL Browsers, iOS/Android PWA & PC) -->
+  <div id="printSheetPreviewModal" class="fixed inset-0 z-50 hidden items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-sm">
+    <div class="glass-modal rounded-3xl max-w-2xl w-full p-5 sm:p-6 space-y-4 max-h-[92dvh] overflow-y-auto custom-scrollbar shadow-2xl border border-slate-700">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center">
+            <i data-lucide="printer" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-sm sm:text-base font-extrabold text-white">معاينة وطباعة الباركودات</h3>
+            <p id="printPreviewCountText" class="text-[11px] text-sky-300 font-bold">جاهز للطباعة (3 باركودات في كل صف)</p>
+          </div>
+        </div>
+        <button type="button" onclick="closePrintSheetPreviewModal()" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Crisp White A4 Sheet Preview -->
+      <div id="printPreviewWhiteSheet" class="bg-white text-slate-950 rounded-2xl p-4 sm:p-5 grid grid-cols-3 gap-3 max-h-[50dvh] overflow-y-auto shadow-inner"></div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+        <button type="button" onclick="executeNativeWindowPrint()" class="py-3 px-4 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-lg transition">
+          <i data-lucide="printer" class="w-4 h-4"></i>
+          <span>طباعة مباشرة الآن</span>
+        </button>
+        <button type="button" onclick="downloadBarcodesSheetAsPng()" class="py-3 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-lg transition">
+          <i data-lucide="download" class="w-4 h-4"></i>
+          <span>حفظ كصورة للطباعة (PNG)</span>
+        </button>
+        <button type="button" onclick="shareBarcodesSheetPng()" class="py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700 font-bold text-xs flex items-center justify-center gap-1.5 transition">
+          <i data-lucide="share-2" class="w-4 h-4 text-sky-400"></i>
+          <span>مشاركة للطابعة</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Notification -->
   <div id="toastNotification" class="fixed bottom-20 md:bottom-6 left-4 right-4 sm:left-5 sm:right-auto z-50 hidden items-center gap-2.5 px-4 py-3 rounded-2xl bg-slate-900/95 border border-emerald-500/40 text-white shadow-2xl">
     <i data-lucide="check-circle" class="w-5 h-5 text-emerald-400 shrink-0"></i>
@@ -1141,11 +1438,11 @@
     const DEFAULT_CATEGORIES = {
       all: { id: 'all', name: 'كل المقاضي', icon: 'layout-grid', color: 'emerald', defaultUnit: 'حبة', step: 1 },
       veg: { id: 'veg', name: 'الخضار والفواكه', icon: 'carrot', color: 'emerald', defaultUnit: 'كجم', step: 0.5, subtitle: 'بالكيلو أو الربطة' },
-      meat: { id: 'meat', name: 'الدجاج واللحوم', icon: 'drumstick', color: 'amber', defaultUnit: 'صحن', step: 1, subtitle: 'بالصحن (صغير/كبير) أو دجاجة كاملة أو أفخاذ' },
+      meat: { id: 'meat', name: 'الدجاج واللحوم والبيض', icon: 'drumstick', color: 'amber', defaultUnit: 'صحن', step: 1, subtitle: 'صحن / دجاجة كاملة / أفخاذ / طبق بيض' },
       rice_pasta: { id: 'rice_pasta', name: 'الرز والمكرونات', icon: 'wheat', color: 'sky', defaultUnit: 'كجم', step: 1, subtitle: 'الرز بالكيلو والمكرونة بالحبة' },
       canned: { id: 'canned', name: 'المعلبات والبقوليات', icon: 'package', color: 'orange', defaultUnit: 'حبة', step: 1, subtitle: 'بالحبة والعلبة (فول، تونة، ذرة)' },
       cleaning: { id: 'cleaning', name: 'مواد التنظيف', icon: 'sparkles', color: 'purple', defaultUnit: 'لتر', step: 0.5, subtitle: 'السائل باللتر والبودرة بالكيلو' },
-      dairy: { id: 'dairy', name: 'الألبان والبيض والأجبان', icon: 'milk', color: 'cyan', defaultUnit: 'لتر', step: 1, subtitle: 'الحليب باللتر والبيض بالطبق' },
+      dairy: { id: 'dairy', name: 'الألبان والأجبان', icon: 'milk', color: 'cyan', defaultUnit: 'لتر', step: 1, subtitle: 'الحليب باللتر والأجبان بالحبة/الكيلو' },
       spices: { id: 'spices', name: 'الزيوت والبهارات والشاي', icon: 'flame', color: 'rose', defaultUnit: 'لتر', step: 0.5, subtitle: 'الزيت باللتر والبهارات بالكيلو/العلبة' },
       frozen: { id: 'frozen', name: 'المجمدات والمخبوزات', icon: 'snowflake', color: 'indigo', defaultUnit: 'حبة', step: 1, subtitle: 'بالكيس أو الحبة' }
     };
@@ -1173,7 +1470,17 @@
         localStorage.removeItem('maqadina_shopping_v1');
 
         const savedCats = localStorage.getItem(STORAGE_KEY_CATEGORIES);
-        if (savedCats) CATEGORIES = Object.assign({}, JSON.parse(JSON.stringify(DEFAULT_CATEGORIES)), JSON.parse(savedCats));
+        if (savedCats) {
+          CATEGORIES = Object.assign({}, JSON.parse(JSON.stringify(DEFAULT_CATEGORIES)), JSON.parse(savedCats));
+          if (CATEGORIES.meat && CATEGORIES.meat.name === 'الدجاج واللحوم') {
+            CATEGORIES.meat.name = 'الدجاج واللحوم والبيض';
+            CATEGORIES.meat.subtitle = 'صحن / دجاجة كاملة / أفخاذ / طبق بيض';
+          }
+          if (CATEGORIES.dairy && CATEGORIES.dairy.name === 'الألبان والبيض والأجبان') {
+            CATEGORIES.dairy.name = 'الألبان والأجبان';
+            CATEGORIES.dairy.subtitle = 'الحليب باللتر والأجبان بالحبة/الكيلو';
+          }
+        }
         const savedInv = localStorage.getItem(STORAGE_KEY_INVENTORY);
         inventory = savedInv ? JSON.parse(savedInv) : [];
 
@@ -1263,6 +1570,7 @@
       document.getElementById('shoppingBadgeCount').textContent = shopCount;
       const mobBadge = document.getElementById('mobShoppingBadgeCount');
       if (mobBadge) mobBadge.textContent = shopCount;
+      if (typeof updateAiHomeAuditBanner === 'function') updateAiHomeAuditBanner();
     }
 
     function switchMainTab(tab, skipHistory) {
@@ -1270,7 +1578,7 @@
         pushInternalAppHistory('tab-' + tab);
       }
       currentTab = tab;
-      const tabs = ['home', 'inventory', 'scanner', 'shopping', 'labels'];
+      const tabs = ['home', 'inventory', 'scanner', 'shopping', 'labels', 'analytics'];
       tabs.forEach(t => {
         const view = document.getElementById('view-' + t);
         const btn = document.getElementById('tabBtn-' + t);
@@ -1307,6 +1615,8 @@
         populateQuickShopSelect();
       } else if (tab === 'labels') {
         renderBarcodeLabelsCatalog();
+      } else if (tab === 'analytics') {
+        renderAnalyticsDashboard();
       } else {
         renderInventoryView();
       }
@@ -1469,8 +1779,8 @@
         if (statusFilter === 'out' && item.quantity > 0) return false;
 
         if (searchQuery) {
-          const hay = `${item.name} ${item.barcode} ${item.subType || ''} ${item.packInfo || ''} ${item.unit} ${item.notes || ''}`.toLowerCase();
-          if (!hay.includes(searchQuery)) return false;
+          const hay = `${item.name} ${item.barcode} ${item.subType || ''} ${item.packInfo || ''} ${item.unit} ${item.notes || ''} ${CATEGORIES[item.category] ? CATEGORIES[item.category].name : ''}`.toLowerCase();
+          if (!hay.includes(searchQuery) && !aiSemanticSearchMatch(item, searchQuery)) return false;
         }
         return true;
       });
@@ -1636,6 +1946,7 @@
       const item = inventory.find(i => i.id === itemId);
       if (!item) return;
       const next = Math.max(0, Math.round((item.quantity + delta) * 100) / 100);
+      if (delta < 0) trackAnalyticsMetric(item.barcode || item.id, item.name, item.category, item.unit, 'consumed', Math.abs(delta));
       item.quantity = next;
       item.updatedAt = Date.now();
       saveAppState();
@@ -1671,6 +1982,7 @@
       }
       saveAppState();
       updateSummaryStats();
+      trackAnalyticsMetric(item.barcode || item.id, item.name, item.category, item.unit, 'ordered', amount);
       showToast(`تمت إضافة "${item.name}" إلى قائمة المقاضي`);
     }
 
@@ -1771,10 +2083,7 @@
       if (!exists) {
         openUnknownProductPrompt(code);
       } else {
-        const resBox = document.getElementById('scannedItemResultBox');
-        if (resBox && resBox.scrollIntoView) {
-          resBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
+        openScannedItemPopup(exists);
         showToast(`تم التعرف على "${exists.name}"`);
       }
     }
@@ -1893,6 +2202,7 @@
             checked: false
           });
         }
+        trackAnalyticsMetric(item.barcode || item.id, item.name, item.category, item.unit, 'ordered', amount);
         showToast(`تمت إضافة ${formatQuantity(amount)} ${item.unit} من "${item.name}" لقائمة المقاضي`);
       }
 
@@ -2044,6 +2354,8 @@
 
         // High-speed dual engine: Native BarcodeDetector + ZXing TRY_HARDER on cropped center region (reads paper & screen barcodes in <150ms)
         const scanCanvas = document.createElement('canvas');
+        scanCanvas.width = 640;
+        scanCanvas.height = 360;
         const scanCtx = scanCanvas.getContext('2d', { willReadFrequently: true });
         let detector = null;
         if ('BarcodeDetector' in window) {
@@ -2067,8 +2379,10 @@
           }
         }
 
+        let isScanTickBusy = false;
         nativeScanInterval = setInterval(async () => {
-          if (!isCameraActive || !videoEl || videoEl.readyState < 2) return;
+          if (!isCameraActive || isScanTickBusy || !videoEl || videoEl.readyState < 2) return;
+          isScanTickBusy = true;
           try {
             if (detector) {
               const directHits = await detector.detect(videoEl);
@@ -2079,10 +2393,9 @@
             }
             const vw = videoEl.videoWidth || 640;
             const vh = videoEl.videoHeight || 480;
-            scanCanvas.width = vw;
-            scanCanvas.height = vh;
-            scanCtx.filter = 'contrast(1.45) brightness(1.08) grayscale(1)';
-            scanCtx.drawImage(videoEl, 0, 0, vw, vh);
+            const sx = Math.max(0, (vw - 640) / 2);
+            const sy = Math.max(0, (vh - 360) / 2);
+            scanCtx.drawImage(videoEl, sx, sy, Math.min(vw, 640), Math.min(vh, 360), 0, 0, 640, 360);
 
             if (detector) {
               const enhancedHits = await detector.detect(scanCanvas);
@@ -2091,15 +2404,18 @@
                 return;
               }
             }
-            if (zxingReader) {
-              const res = await zxingReader.decodeFromImageUrl(scanCanvas.toDataURL('image/jpeg', 0.85));
+            if (zxingReader && zxingReader.decodeFromCanvas) {
+              const res = zxingReader.decodeFromCanvas(scanCanvas);
               if (res && res.text) {
                 onLiveBarcodeDetected(res.text);
                 return;
               }
             }
-          } catch (e) {}
-        }, 140);
+          } catch (e) {
+          } finally {
+            isScanTickBusy = false;
+          }
+        }, 200);
       } catch (err) {
         stopCameraScanner();
         showCameraNotice('تعذر تشغيل الكاميرا داخل نافذة المعاينة الحالية لأن النظام يمنع الوصول للكاميرا في وضع المعاينة. عند تشغيل التطبيق مباشرة في متصفح جوالك عبر HTTPS ستفتح الكاميرا وتقرأ الباركود تلقائياً مثل أجهزة المتاجر.');
@@ -2328,6 +2644,7 @@
         inventory.unshift(invItem);
       }
 
+      trackAnalyticsMetric(entry.barcode || entry.itemId || entry.id, entry.name, entry.category, entry.unit, 'purchased', qtyToAdd);
       recordDeletedTombstone(entry.id, '');
       shoppingList = shoppingList.filter(s => s.id !== shopId);
       saveAppState();
@@ -2407,50 +2724,163 @@
       document.body.removeChild(ta);
     }
 
-    // TAB 4: BARCODE LABELS CATALOG (With Edit & Delete on every barcode card)
+    // TAB 4: BARCODE LABELS CATALOG (Selective Print + Single Barcode Focus Modal + Edit/Delete)
+    let selectedBarcodesForPrint = new Set();
+    let labelsFilterCategory = 'all';
+    let focusedBarcodeItemId = null;
+
+    function toggleBarcodePrintSelect(itemId) {
+      if (selectedBarcodesForPrint.has(itemId)) {
+        selectedBarcodesForPrint.delete(itemId);
+      } else {
+        selectedBarcodesForPrint.add(itemId);
+      }
+      renderBarcodeLabelsCatalog();
+    }
+
+    function selectAllBarcodesForPrint() {
+      const visible = labelsFilterCategory === 'all'
+        ? inventory
+        : inventory.filter(i => i.category === labelsFilterCategory);
+      visible.forEach(i => selectedBarcodesForPrint.add(i.id));
+      renderBarcodeLabelsCatalog();
+    }
+
+    function clearBarcodesForPrint() {
+      selectedBarcodesForPrint.clear();
+      renderBarcodeLabelsCatalog();
+    }
+
+    function selectLabelsCategoryFilter(catId) {
+      labelsFilterCategory = catId;
+      renderBarcodeLabelsCatalog();
+    }
+
+    function openSingleBarcodeFocusModal(itemId) {
+      const item = inventory.find(i => i.id === itemId);
+      if (!item) return;
+      focusedBarcodeItemId = itemId;
+      const modal = document.getElementById('singleBarcodeFocusModal');
+      const catEl = document.getElementById('focusBcCategory');
+      const nameEl = document.getElementById('focusBcName');
+      const detEl = document.getElementById('focusBcDetails');
+      const svgEl = document.getElementById('focusBcSvg');
+      if (!modal || !svgEl) return;
+
+      const cat = CATEGORIES[item.category] || CATEGORIES.all;
+      if (catEl) catEl.textContent = cat.name;
+      if (nameEl) nameEl.textContent = item.name;
+      if (detEl) detEl.textContent = `${formatQuantity(item.quantity)} ${item.unit}${item.packInfo ? ' • ' + item.packInfo : ''}`;
+
+      if (window.JsBarcode) {
+        try {
+          JsBarcode(svgEl, item.barcode, {
+            format: 'CODE128',
+            lineColor: '#020617',
+            background: '#ffffff',
+            width: 2.6,
+            height: 70,
+            displayValue: true,
+            fontSize: 16,
+            fontOptions: 'bold',
+            margin: 10
+          });
+        } catch (e) {}
+      }
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function closeSingleBarcodeFocusModal() {
+      const modal = document.getElementById('singleBarcodeFocusModal');
+      if (!modal) return;
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function printSingleFocusedBarcode() {
+      if (!focusedBarcodeItemId) return;
+      const item = inventory.find(i => i.id === focusedBarcodeItemId);
+      closeSingleBarcodeFocusModal();
+      if (item) openPrintSheetPreviewModal([item]);
+    }
+
     function renderBarcodeLabelsCatalog() {
       const grid = document.getElementById('barcodeCardsCatalogGrid');
+      const catBar = document.getElementById('labelsCategorySelectBar');
+      const printBtnText = document.getElementById('printBarcodesBtnText');
       if (!grid) return;
 
-      if (inventory.length === 0) {
+      if (catBar) {
+        catBar.innerHTML = Object.values(CATEGORIES).map(c => {
+          const active = labelsFilterCategory === c.id;
+          return `
+            <button type="button" onclick="selectLabelsCategoryFilter('${c.id}')" class="px-3 py-1.5 rounded-xl text-[11px] font-bold whitespace-nowrap border transition ${
+              active ? 'bg-emerald-600 text-white border-emerald-400' : 'bg-slate-900 text-slate-300 border-slate-700 hover:border-slate-500'
+            }">
+              ${c.name}
+            </button>
+          `;
+        }).join('');
+      }
+
+      const filtered = labelsFilterCategory === 'all'
+        ? inventory
+        : inventory.filter(i => i.category === labelsFilterCategory);
+
+      const selCount = selectedBarcodesForPrint.size;
+      if (printBtnText) {
+        printBtnText.textContent = selCount > 0 ? `طباعة المحدد (${selCount})` : `طباعة المعروض (${filtered.length})`;
+      }
+
+      if (filtered.length === 0) {
         grid.innerHTML = `
           <div class="col-span-full glass-card rounded-2xl p-8 text-center space-y-3">
             <div class="w-12 h-12 rounded-2xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center mx-auto">
               <i data-lucide="qr-code" class="w-6 h-6"></i>
             </div>
-            <p class="text-base font-bold text-white">لا توجد بطاقات باركود محفوظة بعد</p>
-            <p class="text-xs text-slate-400">اضغط "إنشاء باركود لصنف جديد" لتوليد بطاقات باركود وتعديلها أو حذفها في أي وقت</p>
+            <p class="text-base font-bold text-white">لا توجد بطاقات باركود في هذا العرض</p>
+            <p class="text-xs text-slate-400">اضغط "إنشاء باركود لصنف جديد" لتوليد بطاقات باركود وطباعتها</p>
           </div>
         `;
         if (window.lucide) lucide.createIcons();
         return;
       }
 
-      grid.innerHTML = inventory.map(item => {
+      grid.innerHTML = filtered.map(item => {
         const cat = CATEGORIES[item.category] || CATEGORIES.all;
+        const isSelected = selectedBarcodesForPrint.has(item.id);
+        const skipPrint = selCount > 0 && !isSelected;
         return `
-          <div class="barcode-label-card glass-card rounded-2xl p-4 flex flex-col justify-between gap-3 border border-slate-800">
+          <div class="barcode-label-card ${skipPrint ? 'print-skip' : ''} glass-card rounded-2xl p-4 flex flex-col justify-between gap-3 border ${isSelected ? 'border-sky-400 ring-1 ring-sky-400/50' : 'border-slate-800'}">
             <div class="space-y-1 w-full">
               <div class="print-hide flex items-center justify-between gap-2">
-                <span class="text-[11px] font-bold text-emerald-400">${cat.name}</span>
-                <span class="text-[11px] px-2 py-0.5 rounded bg-slate-800 text-amber-300 font-bold">${item.unit}</span>
+                <button type="button" onclick="toggleBarcodePrintSelect('${item.id}')" class="flex items-center gap-1.5 text-[11px] font-bold ${isSelected ? 'text-sky-300' : 'text-slate-400 hover:text-white'}">
+                  <span class="w-4 h-4 rounded border flex items-center justify-center ${isSelected ? 'bg-sky-500 border-sky-400 text-slate-950' : 'border-slate-600'}">
+                    ${isSelected ? '✓' : ''}
+                  </span>
+                  <span>تحديد للطباعة</span>
+                </button>
+                <span class="text-[11px] px-2 py-0.5 rounded bg-slate-800 text-amber-300 font-bold">${cat.name} • ${item.unit}</span>
               </div>
               <h4 class="label-item-name text-sm font-extrabold text-white text-center sm:text-right">${item.name}</h4>
               <p class="print-hide text-[11px] text-slate-400">${item.packInfo || item.subType || ''}</p>
             </div>
 
-            <button type="button" onclick="printBarcodeLabelsSheet()" class="barcode-svg-wrap w-full bg-white text-slate-950 rounded-xl p-2.5 flex flex-col items-center justify-center shadow-inner cursor-pointer hover:ring-2 hover:ring-emerald-400 transition" title="اضغط لطباعة الباركودات على ورقة">
+            <button type="button" onclick="openSingleBarcodeFocusModal('${item.id}')" class="barcode-svg-wrap w-full bg-white text-slate-950 rounded-xl p-2.5 flex flex-col items-center justify-center shadow-inner cursor-pointer hover:ring-2 hover:ring-emerald-400 transition" title="اضغط لفتح الباركود منفرداً ومسحه بدون تشويش">
               <svg class="real-barcode-svg w-full h-16" data-barcode="${item.barcode}"></svg>
             </button>
 
             <div class="print-hide flex items-center gap-1.5 w-full">
               <button
                 type="button"
-                onclick="simulateScanFromCard('${item.barcode}')"
+                onclick="openSingleBarcodeFocusModal('${item.id}')"
                 class="flex-1 py-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition"
               >
-                <i data-lucide="scan-line" class="w-3.5 h-3.5"></i>
-                <span>مسح الآن</span>
+                <i data-lucide="maximize-2" class="w-3.5 h-3.5"></i>
+                <span>تكبير للمسح</span>
               </button>
               <button
                 type="button"
@@ -2476,6 +2906,26 @@
     }
 
     // MODAL ADD / EDIT ITEM LOGIC
+    function isActualChickenOrMeatText(rawText) {
+      const t = (rawText || '').trim();
+      if (!t || /بيض/.test(t)) return false;
+      return /(دجاج|دجاجه|فرخ|فروج|صدور|أفخاذ|افخاذ|أجنحة|اجنحة|دبوس|لحم|لحمة|لحوم|مفروم|حاشي|غنم|نعيمي|حري|تيس|عجل|بقري|ستيك|ريش|كفتة|شيش|سمك|فيليه|روبيان|جمبري)/.test(t);
+    }
+
+    function updateMeatFieldsVisibility() {
+      const cat = document.getElementById('formCategory').value;
+      const unit = document.getElementById('formUnit').value;
+      const nameVal = (document.getElementById('formName') ? document.getElementById('formName').value : '').trim();
+      const meatBox = document.getElementById('meatDynamicFields');
+      if (!meatBox) return;
+      // Show poultry/meat cut & tray size ONLY if the product name is actually chicken/meat (never for eggs or unrelated items!) and unit is صحن or دجاجة
+      if (cat === 'meat' && isActualChickenOrMeatText(nameVal) && (unit === 'صحن' || unit === 'دجاجة')) {
+        meatBox.classList.remove('hidden');
+      } else {
+        meatBox.classList.add('hidden');
+      }
+    }
+
     function handleFormCategoryChange() {
       const cat = document.getElementById('formCategory').value;
       const unitEl = document.getElementById('formUnit');
@@ -2490,8 +2940,9 @@
       if (cat === 'veg') {
         unitEl.value = 'كجم';
       } else if (cat === 'meat') {
-        meatBox.classList.remove('hidden');
-        unitEl.value = 'صحن';
+        const nameVal = (document.getElementById('formName') ? document.getElementById('formName').value : '').trim();
+        unitEl.value = /بيض/.test(nameVal) ? 'طبق' : 'صحن';
+        updateMeatFieldsVisibility();
       } else if (cat === 'cleaning') {
         cleanBox.classList.remove('hidden');
         unitEl.value = 'لتر';
@@ -2508,6 +2959,12 @@
         unitEl.value = CATEGORIES[cat].defaultUnit;
       } else {
         unitEl.value = 'حبة';
+      }
+      if (typeof refreshAiSuggestedUnitsForCurrentForm === 'function') {
+        refreshAiSuggestedUnitsForCurrentForm();
+      }
+      if (typeof renderFormQuickQtyPills === 'function') {
+        renderFormQuickQtyPills();
       }
       if (window.lucide) lucide.createIcons();
     }
@@ -2571,6 +3028,7 @@
       if (itemId) {
         const item = inventory.find(i => i.id === itemId);
         if (!item) return;
+        userManuallyLockedCategory = true;
         title.textContent = 'تعديل بيانات الصنف والباركود';
         document.getElementById('formItemId').value = item.id;
         document.getElementById('formBarcode').value = item.barcode;
@@ -2578,6 +3036,7 @@
         handleFormCategoryChange();
         document.getElementById('formName').value = item.name;
         document.getElementById('formUnit').value = item.unit;
+        updateMeatFieldsVisibility();
         document.getElementById('formQuantity').value = item.quantity;
         document.getElementById('formMinThreshold').value = item.minThreshold;
         document.getElementById('formNotes').value = item.notes || '';
@@ -2585,6 +3044,7 @@
           document.getElementById('formTrayWeightGrams').value = item.weightGrams || 900;
         }
       } else {
+        userManuallyLockedCategory = (currentTab === 'inventory' && isInventoryBoxOpened && selectedCategory !== 'all');
         title.textContent = 'إضافة صنف جديد للمخزون بالباركود';
         document.getElementById('formItemId').value = '';
         generateRandomBarcodeInForm();
@@ -2596,6 +3056,9 @@
         document.getElementById('formNotes').value = '';
       }
 
+      updateMeatFieldsVisibility();
+      refreshAiSuggestedUnitsForCurrentForm();
+      renderFormQuickQtyPills();
       modal.classList.remove('hidden');
       modal.classList.add('flex');
       if (window.lucide) lucide.createIcons();
@@ -2628,7 +3091,8 @@
       const id = document.getElementById('formItemId').value;
       const barcode = document.getElementById('formBarcode').value.trim();
       const category = document.getElementById('formCategory').value;
-      const name = document.getElementById('formName').value.trim();
+      const rawNameInput = document.getElementById('formName').value.trim();
+      const name = aiNormalizeArabicProductName(rawNameInput);
       const unit = document.getElementById('formUnit').value;
       const quantity = parseFloat(document.getElementById('formQuantity').value) || 0;
       const minThreshold = parseFloat(document.getElementById('formMinThreshold').value) || 1;
@@ -2639,12 +3103,22 @@
       let weightGrams = 1000;
 
       if (category === 'meat') {
-        const cut = document.getElementById('formMeatCut').value;
-        const tray = document.getElementById('formTraySize').value;
-        const grams = parseInt(document.getElementById('formTrayWeightGrams').value, 10) || 700;
-        subType = cut;
-        packInfo = `${tray} (${grams} جم)`;
-        weightGrams = grams;
+        if (unit === 'صحن' || unit === 'دجاجة') {
+          const cut = document.getElementById('formMeatCut').value;
+          const tray = document.getElementById('formTraySize').value;
+          const grams = parseInt(document.getElementById('formTrayWeightGrams').value, 10) || 700;
+          subType = cut;
+          packInfo = `${tray} (${grams} جم)`;
+          weightGrams = grams;
+        } else if (unit === 'طبق') {
+          subType = 'بيض بالطبق';
+          packInfo = 'طبق بيض';
+          weightGrams = 1800;
+        } else {
+          subType = 'لحوم / دواجن بالـ ' + unit;
+          packInfo = 'بالـ ' + unit;
+          weightGrams = 1000;
+        }
       } else if (category === 'cleaning') {
         subType = unit === 'لتر' ? 'منظف سائل (باللتر)' : unit === 'كجم' ? 'منظف بودرة / مسحوق (بالكيلو)' : 'عبوات تنظيف (بالحبة)';
         packInfo = subType;
@@ -2661,9 +3135,13 @@
 
       const step = unit === 'كجم' || unit === 'لتر' ? 0.5 : 1;
 
+      let categoryMovedFrom = null;
       if (id) {
         const existing = inventory.find(i => i.id === id);
         if (existing) {
+          if (existing.category !== category) {
+            categoryMovedFrom = existing.category;
+          }
           existing.barcode = barcode;
           existing.category = category;
           existing.name = name;
@@ -2677,7 +3155,18 @@
           existing.step = step;
           existing.updatedAt = Date.now();
         }
-        showToast(`تم تحديث بيانات "${name}" بنجاح`);
+        shoppingList.forEach(sItem => {
+          if (sItem.itemId === id || sItem.barcode === barcode) {
+            sItem.category = category;
+            sItem.unit = unit;
+            sItem.name = name;
+          }
+        });
+        if (categoryMovedFrom && CATEGORIES[category]) {
+          showToast(`تم نقل "${name}" إلى (${CATEGORIES[category].name}) وتدريب الذكاء الاصطناعي على مكانه الجديد!`);
+        } else {
+          showToast(`تم تحديث بيانات "${name}" وحفظها في ذاكرة الذكاء الاصطناعي`);
+        }
       } else {
         inventory.unshift({
           id: 'item-' + Date.now(),
@@ -2796,12 +3285,223 @@
       });
     }
 
+    let currentItemsToPrint = [];
+
+    function getSelectedItemsForPrint() {
+      const filtered = labelsFilterCategory === 'all'
+        ? inventory
+        : inventory.filter(i => i.category === labelsFilterCategory);
+      if (selectedBarcodesForPrint.size > 0) {
+        return inventory.filter(i => selectedBarcodesForPrint.has(i.id));
+      }
+      return filtered;
+    }
+
     function printBarcodeLabelsSheet() {
-      if (inventory.length === 0) {
-        showToast('أضف صنفاً أو أنشئ باركود أولاً لطباعته');
+      const items = getSelectedItemsForPrint();
+      if (!items || items.length === 0) {
+        showToast('أضف صنفاً أو حدد باركوداً أولاً للطباعة');
         return;
       }
-      window.print();
+      openPrintSheetPreviewModal(items);
+    }
+
+    function openPrintSheetPreviewModal(items) {
+      currentItemsToPrint = items;
+      const modal = document.getElementById('printSheetPreviewModal');
+      const sheet = document.getElementById('printPreviewWhiteSheet');
+      const countEl = document.getElementById('printPreviewCountText');
+      if (!modal || !sheet) return;
+
+      if (countEl) {
+        countEl.textContent = `سيتم طباعة ${items.length} باركود (3 في كل صف — الاسم والباركود فقط)`;
+      }
+
+      sheet.innerHTML = items.map(item => `
+        <div class="border border-slate-300 rounded-xl p-2.5 flex flex-col items-center justify-center text-center bg-white">
+          <div class="text-[11px] sm:text-xs font-extrabold text-slate-950 mb-1 line-clamp-1">${item.name}</div>
+          <svg class="preview-barcode-svg w-full h-14" data-barcode="${item.barcode}"></svg>
+        </div>
+      `).join('');
+
+      sheet.querySelectorAll('.preview-barcode-svg').forEach(svg => {
+        const code = svg.getAttribute('data-barcode') || '';
+        if (window.JsBarcode && code) {
+          try {
+            JsBarcode(svg, code, {
+              format: 'CODE128',
+              lineColor: '#020617',
+              background: '#ffffff',
+              width: 1.7,
+              height: 40,
+              displayValue: true,
+              fontSize: 11,
+              fontOptions: 'bold',
+              margin: 2
+            });
+          } catch (e) {}
+        }
+      });
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function closePrintSheetPreviewModal() {
+      const modal = document.getElementById('printSheetPreviewModal');
+      if (!modal) return;
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function executeNativeWindowPrint() {
+      const items = currentItemsToPrint.length > 0 ? currentItemsToPrint : getSelectedItemsForPrint();
+      if (!items || items.length === 0) return;
+
+      // Try clean dedicated print iframe first (works even when main page has sticky headers/modals!)
+      try {
+        let printFrame = document.getElementById('maqadinaPrintIframe');
+        if (printFrame) printFrame.remove();
+        printFrame = document.createElement('iframe');
+        printFrame.id = 'maqadinaPrintIframe';
+        printFrame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;';
+        document.body.appendChild(printFrame);
+
+        const cardsHtml = items.map(item => {
+          const tempSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+          if (window.JsBarcode) {
+            try {
+              JsBarcode(tempSvg, item.barcode, {
+                format: 'CODE128',
+                lineColor: '#000000',
+                background: '#ffffff',
+                width: 2,
+                height: 48,
+                displayValue: true,
+                fontSize: 13,
+                fontOptions: 'bold',
+                margin: 4
+              });
+            } catch (e) {}
+          }
+          return `
+            <div class="card">
+              <div class="title">${item.name}</div>
+              ${tempSvg.outerHTML}
+            </div>
+          `;
+        }).join('');
+
+        const doc = printFrame.contentWindow.document;
+        doc.open();
+        doc.write(`<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8"><style>
+          @page { size: A4; margin: 10mm; }
+          body { font-family: Tahoma, Arial, sans-serif; margin: 0; background: #fff; color: #000; }
+          .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+          .card { border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 6px; text-align: center; break-inside: avoid; page-break-inside: avoid; }
+          .title { font-size: 13px; font-weight: bold; margin-bottom: 6px; color: #000; }
+          svg { max-width: 100%; height: auto; }
+        </style></head><body><div class="grid">${cardsHtml}</div></body></html>`);
+        doc.close();
+
+        setTimeout(() => {
+          try {
+            printFrame.contentWindow.focus();
+            printFrame.contentWindow.print();
+          } catch (e) {
+            closePrintSheetPreviewModal();
+            window.print();
+          }
+        }, 180);
+      } catch (e) {
+        closePrintSheetPreviewModal();
+        window.print();
+      }
+    }
+
+    async function renderBarcodesSheetToCanvasBlob() {
+      const items = currentItemsToPrint.length > 0 ? currentItemsToPrint : getSelectedItemsForPrint();
+      const cols = 3;
+      const cardW = 340;
+      const cardH = 175;
+      const gap = 20;
+      const pad = 32;
+      const rows = Math.max(1, Math.ceil(items.length / cols));
+      const canvas = document.createElement('canvas');
+      canvas.width = pad * 2 + cols * cardW + (cols - 1) * gap;
+      canvas.height = pad * 2 + rows * cardH + (rows - 1) * gap;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      for (let idx = 0; idx < items.length; idx++) {
+        const item = items[idx];
+        const r = Math.floor(idx / cols);
+        const c = idx % cols;
+        // RTL right-to-left column placement
+        const rtlCol = (cols - 1) - c;
+        const x = pad + rtlCol * (cardW + gap);
+        const y = pad + r * (cardH + gap);
+
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, cardW, cardH);
+
+        ctx.fillStyle = '#020617';
+        ctx.font = 'bold 20px Tajawal, Arial, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(item.name.slice(0, 26), x + cardW / 2, y + 34);
+
+        const bcCanvas = document.createElement('canvas');
+        if (window.JsBarcode) {
+          try {
+            JsBarcode(bcCanvas, item.barcode, {
+              format: 'CODE128',
+              lineColor: '#000000',
+              background: '#ffffff',
+              width: 2.2,
+              height: 70,
+              displayValue: true,
+              fontSize: 16,
+              fontOptions: 'bold',
+              margin: 4
+            });
+            const drawW = Math.min(cardW - 24, bcCanvas.width);
+            const drawH = Math.min(115, bcCanvas.height);
+            ctx.drawImage(bcCanvas, x + (cardW - drawW) / 2, y + 48, drawW, drawH);
+          } catch (e) {}
+        }
+      }
+
+      return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    }
+
+    async function downloadBarcodesSheetAsPng() {
+      const blob = await renderBarcodesSheetToCanvasBlob();
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `barcodes_sheet_${Date.now()}.png`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+      showToast('تم حفظ ورقة الباركودات كصورة PNG جاهزة للطباعة!');
+    }
+
+    async function shareBarcodesSheetPng() {
+      const blob = await renderBarcodesSheetToCanvasBlob();
+      if (!blob) return;
+      const file = new File([blob], 'barcodes_sheet.png', { type: 'image/png' });
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], title: 'بطاقات باركود مقاضينا الذكي' });
+          return;
+        } catch (e) {}
+      }
+      downloadBarcodesSheetAsPng();
     }
 
     // ============================================================================
@@ -2827,6 +3527,7 @@
             apiKey: parsed.apiKey || DEFAULT_GEMINI_KEY,
             learnedBarcodes: parsed.learnedBarcodes || {},
             learnedKeywords: parsed.learnedKeywords || {},
+            learnedExactNames: parsed.learnedExactNames || {},
             scanCount: parsed.scanCount || 0,
             historyLog: parsed.historyLog || []
           };
@@ -2861,38 +3562,88 @@
       if (s3) s3.textContent = aiMemory.scanCount || 0;
     }
 
-    function learnBarcodePattern(barcode, name, category, unit, extra = {}) {
-      if (!barcode || !name) return;
-      const prev = aiMemory.learnedBarcodes[barcode] || { hits: 0 };
-      aiMemory.learnedBarcodes[barcode] = {
-        barcode,
-        name,
-        category,
-        unit,
-        subType: extra.subType || prev.subType || '',
-        packInfo: extra.packInfo || prev.packInfo || '',
-        weightGrams: extra.weightGrams || prev.weightGrams || 1000,
-        defaultQty: extra.quantity || prev.defaultQty || 1,
-        minThreshold: extra.minThreshold || prev.minThreshold || 1,
-        hits: (prev.hits || 0) + 1,
-        updatedAt: new Date().toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })
-      };
+    let userManuallyLockedCategory = false;
 
-      // Also learn words from the item name so future similar items get classified automatically
-      const words = name.split(/\s+/).filter(w => w.length >= 3);
-      words.forEach(w => {
-        aiMemory.learnedKeywords[w] = {
+    function normalizeArabicTokenForAi(word) {
+      let w = String(word || '').trim().toLowerCase();
+      w = w.replace(/[إأآ]/g, 'ا').replace(/ة$/g, 'ه');
+      if (w.startsWith('ال') && w.length >= 4) {
+        w = w.slice(2);
+      }
+      return w;
+    }
+
+    function learnBarcodePattern(barcode, name, category, unit, extra = {}) {
+      if (!name || !category) return;
+      if (!aiMemory.learnedBarcodes) aiMemory.learnedBarcodes = {};
+      if (!aiMemory.learnedKeywords) aiMemory.learnedKeywords = {};
+      if (!aiMemory.learnedExactNames) aiMemory.learnedExactNames = {};
+
+      if (barcode) {
+        const prev = aiMemory.learnedBarcodes[barcode] || { hits: 0 };
+        aiMemory.learnedBarcodes[barcode] = {
+          barcode,
+          name,
           category,
           unit,
-          subType: extra.subType || '',
-          packInfo: extra.packInfo || '',
-          weightGrams: extra.weightGrams || 1000
+          subType: extra.subType || prev.subType || '',
+          packInfo: extra.packInfo || prev.packInfo || '',
+          weightGrams: extra.weightGrams || prev.weightGrams || 1000,
+          defaultQty: extra.quantity || prev.defaultQty || 1,
+          minThreshold: extra.minThreshold || prev.minThreshold || 1,
+          hits: (prev.hits || 0) + 1,
+          updatedAt: new Date().toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })
         };
+      }
+
+      const learnedEntry = {
+        category,
+        unit,
+        subType: extra.subType || '',
+        packInfo: extra.packInfo || '',
+        weightGrams: extra.weightGrams || 1000,
+        updatedByUserAt: Date.now()
+      };
+
+      // 1. Learn exact full name (raw and normalized)
+      const cleanFull = name.trim();
+      const normFull = normalizeArabicTokenForAi(cleanFull);
+      aiMemory.learnedExactNames[cleanFull] = learnedEntry;
+      if (normFull) aiMemory.learnedExactNames[normFull] = learnedEntry;
+
+      // 2. Learn individual words (2+ chars, both raw and without "ال") so moving an item updates its home everywhere!
+      const stopWords = new Set(['من', 'في', 'على', 'مع', 'او', 'أو', 'كل', 'حبة', 'كيلو', 'لتر', 'صحن', 'طبق', 'علبة', 'كبير', 'صغير', 'وسط']);
+      const words = cleanFull.split(/\s+/).filter(w => w.length >= 2);
+      words.forEach(w => {
+        const normW = normalizeArabicTokenForAi(w);
+        if (stopWords.has(w) || stopWords.has(normW)) return;
+        aiMemory.learnedKeywords[w] = learnedEntry;
+        if (normW && normW.length >= 2) {
+          aiMemory.learnedKeywords[normW] = learnedEntry;
+        }
       });
 
-      aiMemory.historyLog.unshift(`تعلّم الصنف "${name}" (${CATEGORIES[category] ? CATEGORIES[category].name : category} - ${unit}) بباركود ${barcode}`);
+      aiMemory.historyLog.unshift(`تعلّم مكان "${name}" ← (${CATEGORIES[category] ? CATEGORIES[category].name : category} • ${unit})`);
       aiMemory.historyLog = aiMemory.historyLog.slice(0, 25);
       saveAiMemory();
+    }
+
+    function syncAiMemoryFromUserInventory() {
+      if (!aiMemory.learnedKeywords) aiMemory.learnedKeywords = {};
+      if (!aiMemory.learnedExactNames) aiMemory.learnedExactNames = {};
+      // Fix any legacy cached egg -> dairy entry if user hasn't explicitly placed eggs in dairy
+      ['بيض', 'البيض', 'بيضة', 'طبق بيض'].forEach(k => {
+        if (aiMemory.learnedKeywords[k] && aiMemory.learnedKeywords[k].category === 'dairy' && !aiMemory.learnedKeywords[k].updatedByUserAt) {
+          aiMemory.learnedKeywords[k].category = 'meat';
+          aiMemory.learnedKeywords[k].unit = 'طبق';
+        }
+      });
+      // Every existing item in user's inventory is authoritative truth for where that item belongs
+      inventory.forEach(item => {
+        if (item && item.name && item.category && CATEGORIES[item.category]) {
+          learnBarcodePattern(item.barcode, item.name, item.category, item.unit, item);
+        }
+      });
     }
 
     function recordAiScanEvent(barcode) {
@@ -2905,16 +3656,54 @@
       }
     }
 
-    // Built-in Arabic Neural Rules + Self-Learned Dictionary Classifier
+    // Priority 1: Check User's Current Inventory & User-Learned Placements FIRST (Overrides all static rules!)
+    // Priority 2: Built-in rules ONLY for known items not yet customized by the user
+    // Priority 3: If unknown, return null so AI NEVER guesses or messes with user's choice!
     function classifyArabicGroceryTextLocal(rawText) {
       const text = (rawText || '').trim();
       if (!text) return null;
+      const normText = normalizeArabicTokenForAi(text);
 
-      // 1. Check self-learned keywords first (self-evolving priority!)
-      const tokens = text.split(/\s+/);
+      // A. Check live Inventory items first (if user already placed/moved this item in a category, obey it 100%!)
+      const existingMatch = inventory.find(i => {
+        if (!i || !i.name) return false;
+        const n = i.name.trim();
+        return n === text || normalizeArabicTokenForAi(n) === normText;
+      });
+      if (existingMatch && CATEGORIES[existingMatch.category]) {
+        return {
+          name: text,
+          category: existingMatch.category,
+          unit: existingMatch.unit,
+          subType: existingMatch.subType || '',
+          packInfo: existingMatch.packInfo || '',
+          weightGrams: existingMatch.weightGrams || 1000,
+          source: `من مكان الصنف الذي اعتمدته في (${CATEGORIES[existingMatch.category].name})`
+        };
+      }
+
+      // B. Check exact learned names from user's past additions/relocations
+      if (aiMemory.learnedExactNames) {
+        const exact = aiMemory.learnedExactNames[text] || aiMemory.learnedExactNames[normText];
+        if (exact && CATEGORIES[exact.category]) {
+          return {
+            name: text,
+            category: exact.category,
+            unit: exact.unit,
+            subType: exact.subType || '',
+            packInfo: exact.packInfo || '',
+            weightGrams: exact.weightGrams || 1000,
+            source: `من ذاكرة تعديلاتك (${CATEGORIES[exact.category].name})`
+          };
+        }
+      }
+
+      // C. Check user-learned keywords (both raw token and normalized token without "ال")
+      const tokens = text.split(/\s+/).filter(w => w.length >= 2);
       for (const tk of tokens) {
-        if (aiMemory.learnedKeywords && aiMemory.learnedKeywords[tk]) {
-          const learned = aiMemory.learnedKeywords[tk];
+        const normTk = normalizeArabicTokenForAi(tk);
+        const learned = (aiMemory.learnedKeywords && (aiMemory.learnedKeywords[tk] || aiMemory.learnedKeywords[normTk])) || null;
+        if (learned && CATEGORIES[learned.category]) {
           return {
             name: text,
             category: learned.category,
@@ -2922,12 +3711,24 @@
             subType: learned.subType || '',
             packInfo: learned.packInfo || '',
             weightGrams: learned.weightGrams || 1000,
-            source: 'من ذاكرة التعلم الذاتي'
+            source: `تعلّم من تصنيفك السابق (${CATEGORIES[learned.category].name})`
           };
         }
       }
 
-      // 2. Built-in Domain Knowledge Rules matching user's exact unit system
+      // D. Built-in Domain Knowledge Rules (Only used when user hasn't overridden the word yet)
+      if (/(بيض|طبق بيض)/.test(text)) {
+        return {
+          name: text,
+          category: 'meat',
+          unit: 'طبق',
+          subType: 'بيض بالطبق',
+          packInfo: 'طبق بيض',
+          weightGrams: 1800,
+          source: 'تحليل الذكاء الاصطناعي للدجاج واللحوم والبيض'
+        };
+      }
+
       if (/(دجاج|صدور|أفخاذ|افخاذ|أجنحة|اجنحة|لحم|مفروم|حاشي|غنم|سمك|فيليه)/.test(text)) {
         const isWhole = /كامل/.test(text);
         const isKilo = /كيلو|كجم|لحم/.test(text) && !/صحن/.test(text);
@@ -3015,16 +3816,16 @@
         };
       }
 
-      if (/(حليب|لبن|زبادي|جبن|جبنة|بيض|زبدة|كريمة)/.test(text)) {
-        const isEggs = /بيض|طبق/.test(text);
+      if (/(حليب|لبن|زبادي|جبن|جبنة|زبدة|كريمة)/.test(text)) {
+        const isCheese = /جبن|جبنة|زبدة/.test(text);
         return {
           name: text,
           category: 'dairy',
-          unit: isEggs ? 'طبق' : 'لتر',
-          subType: isEggs ? 'بيض بالطبق' : 'ألبان سائلة',
-          packInfo: isEggs ? 'طبق 30 حبة' : 'باللتر',
-          weightGrams: 1000,
-          source: 'تحليل الذكاء الاصطناعي للألبان والبيض'
+          unit: isCheese ? 'حبة' : 'لتر',
+          subType: isCheese ? 'أجبان' : 'ألبان سائلة',
+          packInfo: isCheese ? 'بالحبة / العلبة' : 'باللتر',
+          weightGrams: 500,
+          source: 'تحليل الذكاء الاصطناعي للألبان والأجبان'
         };
       }
 
@@ -3039,6 +3840,27 @@
           weightGrams: 1000,
           source: 'تحليل الذكاء الاصطناعي للزيوت والبهارات'
         };
+      }
+
+      // Fallback: Check live user-edited/added Category names & subtitles
+      const textWords = text.split(/\s+/).filter(w => w.length >= 2);
+      for (const cat of Object.values(CATEGORIES)) {
+        if (!cat || cat.id === 'all') continue;
+        const catText = `${cat.name} ${cat.subtitle || ''}`;
+        for (const w of textWords) {
+          if (catText.includes(w)) {
+            const unit = /بيض/.test(w) ? 'طبق' : (cat.defaultUnit || 'حبة');
+            return {
+              name: text,
+              category: cat.id,
+              unit,
+              subType: cat.name,
+              packInfo: cat.subtitle || ('بالـ ' + unit),
+              weightGrams: unit === 'طبق' ? 1800 : 1000,
+              source: `تطابق ذكي مع تصنيف "${cat.name}"`
+            };
+          }
+        }
       }
 
       return null;
@@ -3109,14 +3931,18 @@
     }
 
     function handleFormNameSmartInfer(val) {
+      updateMeatFieldsVisibility();
       const res = classifyArabicGroceryTextLocal(val);
       const hintEl = document.getElementById('formAiSuggestionHint');
       if (!res) {
         if (hintEl) hintEl.classList.add('hidden');
+        if (typeof refreshAiSuggestedUnitsForCurrentForm === 'function') refreshAiSuggestedUnitsForCurrentForm();
         return;
       }
-      document.getElementById('formCategory').value = res.category;
-      handleFormCategoryChange();
+      if (!userManuallyLockedCategory) {
+        document.getElementById('formCategory').value = res.category;
+        handleFormCategoryChange();
+      }
       document.getElementById('formUnit').value = res.unit;
       if (res.category === 'meat') {
         if (res.meatCut) document.getElementById('formMeatCut').value = res.meatCut;
@@ -3125,6 +3951,9 @@
       } else if (res.category === 'cleaning' && res.cleanType) {
         selectCleaningType(res.cleanType);
       }
+      updateMeatFieldsVisibility();
+      refreshAiSuggestedUnitsForCurrentForm();
+      renderFormQuickQtyPills();
       if (hintEl) {
         hintEl.textContent = `✨ ${res.source}: تم ضبط التصنيف (${CATEGORIES[res.category].name}) والوحدة (${res.unit}) تلقائياً`;
         hintEl.classList.remove('hidden');
@@ -3189,6 +4018,7 @@
           updatedAt: Date.now()
         };
         inventory.unshift(newItem);
+        trackAnalyticsMetric(barcode, newItem.name, newItem.category, newItem.unit, 'aiAdded', qty);
         learnBarcodePattern(barcode, newItem.name, newItem.category, newItem.unit, newItem);
         added++;
       }
@@ -3382,6 +4212,16 @@
         lastFullResetAt: mergedResetAt
       };
 
+      if (remoteData.analyticsStats && typeof remoteData.analyticsStats === 'object') {
+        Object.entries(remoteData.analyticsStats).forEach(([k, r]) => {
+          const loc = analyticsStats[k];
+          if (!loc || (r.updatedAt || 0) >= (loc.updatedAt || 0)) {
+            analyticsStats[k] = r;
+          }
+        });
+        saveAnalyticsStats();
+        if (currentTab === 'analytics') renderAnalyticsDashboard();
+      }
       if (remoteData.categories && typeof remoteData.categories === 'object') {
         CATEGORIES = Object.assign({}, CATEGORIES, remoteData.categories);
         syncCategorySelectDropdowns();
@@ -3456,6 +4296,7 @@
     function buildSyncPayload() {
       return {
         categories: JSON.parse(JSON.stringify(CATEGORIES)),
+        analyticsStats: JSON.parse(JSON.stringify(analyticsStats)),
         inventory: JSON.parse(JSON.stringify(inventory)),
         shoppingList: JSON.parse(JSON.stringify(shoppingList)),
         tombstones: JSON.parse(JSON.stringify(cloudTombstones)),
@@ -3779,7 +4620,7 @@
     // Prevents edge swipe from exiting the PWA; navigates back inside the app!
     // ============================================================================
     function closeAnyOpenModal() {
-      const modalIds = ['itemFormModal', 'quickScanPopupModal', 'zeroResetModal', 'aiBrainModal', 'cloudSyncModal', 'pwaInstallModal', 'categoryFormModal', 'unknownProductPromptModal'];
+      const modalIds = ['itemFormModal', 'quickScanPopupModal', 'zeroResetModal', 'aiBrainModal', 'cloudSyncModal', 'pwaInstallModal', 'categoryFormModal', 'unknownProductPromptModal', 'scannedItemPopupModal', 'singleBarcodeFocusModal', 'printSheetPreviewModal'];
       for (const id of modalIds) {
         const el = document.getElementById(id);
         if (el && !el.classList.contains('hidden')) {
@@ -3927,7 +4768,11 @@
       saveAppState();
       renderInventoryView();
       closeCategoryModal();
-      showToast(existingId ? `تم تعديل التصنيف "${name}"` : `تمت إضافة التصنيف "${name}"`);
+      name.split(/\s+/).filter(w => w.length >= 3).forEach(w => {
+        aiMemory.learnedKeywords[w] = { category: id, unit: defaultUnit, subType: name, packInfo: subtitle || ('بالـ ' + defaultUnit), weightGrams: 1000 };
+      });
+      saveAiMemory();
+      showToast(existingId ? `تم تعديل التصنيف "${name}" وتحديث ذاكرة الذكاء الاصطناعي` : `تمت إضافة التصنيف "${name}" وتدريب الذكاء عليه`);
     }
 
     function deleteCurrentCategory() {
@@ -3960,26 +4805,761 @@
         'cloudSyncModal',
         'pwaInstallModal',
         'categoryFormModal',
-        'unknownProductPromptModal'
+        'unknownProductPromptModal',
+        'scannedItemPopupModal',
+        'singleBarcodeFocusModal',
+        'printSheetPreviewModal'
       ];
       modalIds.forEach(id => {
         const modal = document.getElementById(id);
         if (!modal) return;
         modal.addEventListener('click', (e) => {
-          if (e.target === modal) {
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
+          if (!e.target.closest('.glass-modal') && lastBackdropTouchStartedOutside) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (id === 'quickScanPopupModal' && typeof closeQuickScanModal === 'function') {
+              closeQuickScanModal();
+            } else {
+              modal.classList.add('hidden');
+              modal.classList.remove('flex');
+            }
           }
+          lastBackdropTouchStartedOutside = false;
         });
       });
     }
 
 
+    // ============================================================================
+    // V2.1 QUICK WEIGHT/QUANTITY PILLS, AI UNIT SUGGESTIONS & SCAN RESULT POPUP
+    // ============================================================================
+    function getQuickQuantitiesForUnit(unit) {
+      if (unit === 'كجم') {
+        return [
+          { label: '100 جم (0.1)', val: 0.1 },
+          { label: '250 جم (0.25)', val: 0.25 },
+          { label: '500 جم (نص كيلو)', val: 0.5 },
+          { label: '1 كجم', val: 1 },
+          { label: '2 كجم', val: 2 },
+          { label: '5 كجم', val: 5 },
+          { label: '10 كجم', val: 10 }
+        ];
+      }
+      if (unit === 'لتر') {
+        return [
+          { label: '100 مل (0.1)', val: 0.1 },
+          { label: '250 مل (0.25)', val: 0.25 },
+          { label: '500 مل (نص لتر)', val: 0.5 },
+          { label: '1 لتر', val: 1 },
+          { label: '2 لتر', val: 2 },
+          { label: '5 لتر', val: 5 },
+          { label: '10 لتر', val: 10 }
+        ];
+      }
+      if (unit === 'جرام' || unit === 'مل') {
+        return [
+          { label: `50 ${unit}`, val: 50 },
+          { label: `100 ${unit}`, val: 100 },
+          { label: `250 ${unit}`, val: 250 },
+          { label: `500 ${unit}`, val: 500 },
+          { label: `750 ${unit}`, val: 750 },
+          { label: `1000 ${unit}`, val: 1000 }
+        ];
+      }
+      return [
+        { label: `1 ${unit}`, val: 1 },
+        { label: `2 ${unit}`, val: 2 },
+        { label: `3 ${unit}`, val: 3 },
+        { label: `4 ${unit}`, val: 4 },
+        { label: `6 ${unit}`, val: 6 },
+        { label: `10 ${unit}`, val: 10 }
+      ];
+    }
+
+    function renderFormQuickQtyPills() {
+      const unitEl = document.getElementById('formUnit');
+      const wrap = document.getElementById('formQuickQtyPills');
+      if (!unitEl || !wrap) return;
+      const unit = unitEl.value || 'حبة';
+      const presets = getQuickQuantitiesForUnit(unit);
+      wrap.innerHTML = presets.map(p => `
+        <button type="button" onclick="document.getElementById('formQuantity').value='${p.val}'" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-emerald-600/30 text-emerald-300 border border-slate-700 text-[11px] font-bold transition">
+          ${p.label}
+        </button>
+      `).join('');
+    }
+
+    const DEFAULT_CATEGORY_UNITS = {
+      meat: ['صحن', 'دجاجة', 'كجم', 'طبق', 'حبة'],
+      egg_special: ['طبق', 'حبة', 'كرتون'],
+      veg: ['كجم', 'جرام', 'ربطة', 'كرتون', 'كيس'],
+      cleaning: ['لتر', 'مل', 'كجم', 'حبة', 'كرتون'],
+      rice_pasta: ['كجم', 'كيس', 'حبة', 'كرتون'],
+      canned: ['حبة', 'علبة', 'كرتون', 'شدة'],
+      dairy: ['لتر', 'حبة', 'علبة', 'كجم'],
+      spices: ['لتر', 'كجم', 'جرام', 'علبة'],
+      frozen: ['كيس', 'حبة', 'كجم', 'كرتون']
+    };
+
+    let isAiUnitsEditMode = false;
+
+    function getUnitBucketKeyForCurrentForm() {
+      const nameVal = (document.getElementById('formName') ? document.getElementById('formName').value : '').trim();
+      const cat = document.getElementById('formCategory') ? document.getElementById('formCategory').value : 'canned';
+      if (/بيض/.test(nameVal)) return 'egg_special';
+      return cat || 'canned';
+    }
+
+    function getEditableUnitsForBucket(bucketKey) {
+      if (!aiMemory.customCategoryUnits) aiMemory.customCategoryUnits = {};
+      if (!Array.isArray(aiMemory.customCategoryUnits[bucketKey]) || aiMemory.customCategoryUnits[bucketKey].length === 0) {
+        const base = DEFAULT_CATEGORY_UNITS[bucketKey] || (CATEGORIES[bucketKey] && CATEGORIES[bucketKey].defaultUnit ? [CATEGORIES[bucketKey].defaultUnit, 'حبة', 'كجم'] : ['حبة', 'كجم', 'لتر']);
+        aiMemory.customCategoryUnits[bucketKey] = [...base];
+      }
+      return aiMemory.customCategoryUnits[bucketKey];
+    }
+
+    function ensureUnitOptionExistsInSelect(unitName) {
+      const sel = document.getElementById('formUnit');
+      if (!sel || !unitName) return;
+      const exists = Array.from(sel.options).some(opt => opt.value === unitName);
+      if (!exists) {
+        const opt = document.createElement('option');
+        opt.value = unitName;
+        opt.textContent = unitName;
+        sel.appendChild(opt);
+      }
+    }
+
+    function selectSuggestedAiUnit(unitName) {
+      ensureUnitOptionExistsInSelect(unitName);
+      const sel = document.getElementById('formUnit');
+      if (sel) sel.value = unitName;
+      updateMeatFieldsVisibility();
+      renderFormQuickQtyPills();
+      refreshAiSuggestedUnitsForCurrentForm();
+    }
+
+    function toggleAiUnitsEditMode() {
+      isAiUnitsEditMode = !isAiUnitsEditMode;
+      const editorBox = document.getElementById('aiUnitsEditorBox');
+      const btn = document.getElementById('toggleEditUnitsBtn');
+      if (editorBox) {
+        if (isAiUnitsEditMode) editorBox.classList.remove('hidden');
+        else editorBox.classList.add('hidden');
+      }
+      if (btn) {
+        btn.innerHTML = isAiUnitsEditMode
+          ? '<span>حفظ الوحدات ✓</span>'
+          : '<i data-lucide="pencil" class="w-3 h-3"></i><span>تعديل الوحدات</span>';
+      }
+      refreshAiSuggestedUnitsForCurrentForm();
+      if (window.lucide) lucide.createIcons();
+    }
+
+    let editingUnitIndex = -1;
+
+    function addCustomAiUnitFromInput() {
+      const input = document.getElementById('newCustomUnitInput');
+      const val = (input ? input.value : '').trim();
+      if (!val) return;
+      const bucket = getUnitBucketKeyForCurrentForm();
+      const list = getEditableUnitsForBucket(bucket);
+      if (editingUnitIndex >= 0 && editingUnitIndex < list.length) {
+        list[editingUnitIndex] = val;
+        editingUnitIndex = -1;
+        saveAiMemory();
+        ensureUnitOptionExistsInSelect(val);
+        if (input) input.value = '';
+        selectSuggestedAiUnit(val);
+        showToast(`تم تعديل الوحدة إلى "${val}"`);
+        return;
+      }
+      if (!list.includes(val)) {
+        list.push(val);
+        saveAiMemory();
+      }
+      ensureUnitOptionExistsInSelect(val);
+      if (input) input.value = '';
+      selectSuggestedAiUnit(val);
+      showToast(`تمت إضافة الوحدة "${val}" وحفظها في الذكاء الاصطناعي`);
+    }
+
+    function removeSuggestedAiUnit(idx) {
+      const bucket = getUnitBucketKeyForCurrentForm();
+      const list = getEditableUnitsForBucket(bucket);
+      if (list.length <= 1) {
+        showToast('يجب إبقاء وحدة واحدة على الأقل');
+        return;
+      }
+      const removed = list.splice(idx, 1)[0];
+      editingUnitIndex = -1;
+      saveAiMemory();
+      const sel = document.getElementById('formUnit');
+      if (sel && sel.value === removed && list[0]) {
+        sel.value = list[0];
+      }
+      updateMeatFieldsVisibility();
+      renderFormQuickQtyPills();
+      refreshAiSuggestedUnitsForCurrentForm();
+      showToast(`تم حذف الوحدة "${removed}"`);
+    }
+
+    function renameSuggestedAiUnit(idx) {
+      const bucket = getUnitBucketKeyForCurrentForm();
+      const list = getEditableUnitsForBucket(bucket);
+      const oldVal = list[idx];
+      if (!oldVal) return;
+      editingUnitIndex = idx;
+      const input = document.getElementById('newCustomUnitInput');
+      if (input) {
+        input.value = oldVal;
+        input.focus();
+      }
+      showToast(`اكتب الاسم الجديد للوحدة "${oldVal}" في الحقل بالأسفل واضغط (+ إضافة)`);
+    }
+
+    function refreshAiSuggestedUnitsForCurrentForm() {
+      const bucket = getUnitBucketKeyForCurrentForm();
+      const units = getEditableUnitsForBucket(bucket);
+      const activeUnit = document.getElementById('formUnit') ? document.getElementById('formUnit').value : units[0];
+      units.forEach(ensureUnitOptionExistsInSelect);
+      renderAiUnitSuggestionPills(units, activeUnit);
+    }
+
+    function renderAiUnitSuggestionPills(suggestedUnits, activeUnit) {
+      const wrap = document.getElementById('formAiUnitPillsWrap');
+      const box = document.getElementById('formAiUnitPills');
+      if (!wrap || !box) return;
+      const units = Array.isArray(suggestedUnits) && suggestedUnits.length > 0 ? suggestedUnits : ['حبة', 'كجم'];
+      wrap.classList.remove('hidden');
+
+      box.innerHTML = units.map((u, idx) => {
+        const isActive = u === activeUnit;
+        if (isAiUnitsEditMode) {
+          return `
+            <div class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-extrabold bg-slate-900 text-purple-200 border border-purple-400/50">
+              <button type="button" onclick="renameSuggestedAiUnit(${idx})" class="hover:text-white flex items-center gap-1" title="اضغط لتعديل اسم الوحدة">
+                <span>${u}</span>
+                <span class="text-[10px] text-sky-300">✎</span>
+              </button>
+              <button type="button" onclick="removeSuggestedAiUnit(${idx})" class="w-4 h-4 rounded-full bg-rose-500/25 hover:bg-rose-500 text-rose-300 hover:text-white flex items-center justify-center text-[11px] leading-none" title="حذف الوحدة">
+                ×
+              </button>
+            </div>
+          `;
+        }
+        return `
+          <button type="button" onclick="selectSuggestedAiUnit('${u}')" class="px-3 py-1.5 rounded-xl text-xs font-extrabold border transition ${
+            isActive
+              ? 'bg-purple-600 text-white border-purple-400 shadow'
+              : 'bg-slate-900 text-purple-200 border-slate-700 hover:border-purple-400'
+          }">
+            ${u}
+          </button>
+        `;
+      }).join('');
+    }
+
+    let activePopupScanMode = 'shop';
+
+    function openScannedItemPopup(item) {
+      const modal = document.getElementById('scannedItemPopupModal');
+      const numEl = document.getElementById('scanPopupBarcodeNum');
+      const bodyEl = document.getElementById('scanPopupBody');
+      if (!modal || !bodyEl || !item) return;
+
+      activePopupScanMode = scanActionMode || 'shop';
+      if (numEl) numEl.textContent = `باركود: ${item.barcode}`;
+      renderScannedPopupContent(item);
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function closeScannedItemPopup() {
+      const modal = document.getElementById('scannedItemPopupModal');
+      if (!modal) return;
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function setPopupScanMode(mode, itemId) {
+      activePopupScanMode = mode;
+      const item = inventory.find(i => i.id === itemId);
+      if (item) renderScannedPopupContent(item);
+    }
+
+    function renderScannedPopupContent(item) {
+      const bodyEl = document.getElementById('scanPopupBody');
+      if (!bodyEl) return;
+      const cat = CATEGORIES[item.category] || CATEGORIES.all;
+      const presets = getQuickQuantitiesForUnit(item.unit);
+
+      const btnMeta = {
+        shop: { label: 'تأكيد وإضافة لقائمة المقاضي', cls: 'bg-sky-500 hover:bg-sky-400 text-slate-950' },
+        add: { label: 'تأكيد وإضافة للأصناف', cls: 'bg-emerald-500 hover:bg-emerald-400 text-slate-950' },
+        consume: { label: 'تأكيد السحب والاستهلاك', cls: 'bg-rose-500 hover:bg-rose-400 text-white' }
+      }[activePopupScanMode] || { label: 'تأكيد', cls: 'bg-sky-500 text-slate-950' };
+
+      const aiAdvice = getAiScanAdviceForItem(item);
+      bodyEl.innerHTML = `
+        <div class="flex items-start justify-between gap-2 bg-slate-900/90 p-3.5 rounded-2xl border border-slate-800">
+          <div>
+            <span class="text-[11px] font-bold text-emerald-400">${cat.name}</span>
+            <h4 class="text-base font-extrabold text-white mt-0.5">${item.name}</h4>
+            <p class="text-[11px] text-amber-300 mt-0.5">${item.packInfo || item.subType || item.unit}</p>
+          </div>
+          <div class="text-left shrink-0">
+            <span class="text-[11px] text-slate-400 block">المتوفر حالياً</span>
+            <span class="text-xl font-black text-emerald-400">${formatQuantity(item.quantity)} ${item.unit}</span>
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <p class="text-xs font-bold text-slate-300">اختر الإجراء:</p>
+          <div class="grid grid-cols-3 gap-1.5">
+            <button type="button" onclick="setPopupScanMode('shop', '${item.id}')" class="py-2 px-2 rounded-xl text-[11px] font-extrabold border transition ${activePopupScanMode === 'shop' ? 'bg-sky-600 text-white border-sky-400' : 'bg-slate-900 text-slate-300 border-slate-700'}">+ لقائمة المقاضي</button>
+            <button type="button" onclick="setPopupScanMode('add', '${item.id}')" class="py-2 px-2 rounded-xl text-[11px] font-extrabold border transition ${activePopupScanMode === 'add' ? 'bg-emerald-600 text-white border-emerald-400' : 'bg-slate-900 text-slate-300 border-slate-700'}">+ إضافة للأصناف</button>
+            <button type="button" onclick="setPopupScanMode('consume', '${item.id}')" class="py-2 px-2 rounded-xl text-[11px] font-extrabold border transition ${activePopupScanMode === 'consume' ? 'bg-rose-600 text-white border-rose-400' : 'bg-slate-900 text-slate-300 border-slate-700'}">- سحب واستهلاك</button>
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <p class="text-xs font-bold text-slate-300">حدد الوزن أو الكمية (${item.unit}):</p>
+          <div class="flex flex-wrap gap-1.5">
+            ${presets.map(p => `
+              <button type="button" onclick="document.getElementById('popupScannedQtyInput').value='${p.val}'" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-emerald-300 border border-slate-700">
+                ${p.label}
+              </button>
+            `).join('')}
+          </div>
+          <div class="flex items-center gap-2 pt-1">
+            <input id="popupScannedQtyInput" type="number" step="any" min="0.001" value="${item.step || 1}" class="w-28 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm font-black text-white text-center outline-none focus:border-emerald-500" />
+            <span class="text-xs font-bold text-slate-300">${item.unit}</span>
+          </div>
+        </div>
+
+        ${aiAdvice ? `
+          <div class="p-2.5 rounded-xl bg-purple-500/15 border border-purple-500/30 text-[11px] text-purple-200 flex items-center gap-2">
+            <i data-lucide="sparkles" class="w-4 h-4 text-purple-300 shrink-0"></i>
+            <span>${aiAdvice}</span>
+          </div>
+        ` : ''}
+        <button type="button" onclick="confirmPopupScannedAction('${item.id}')" class="w-full py-3 rounded-xl font-extrabold text-sm shadow-lg transition ${btnMeta.cls}">
+          ${btnMeta.label}
+        </button>
+      `;
+    }
+
+    function confirmPopupScannedAction(itemId) {
+      const item = inventory.find(i => i.id === itemId);
+      if (!item) return;
+      const qtyInput = document.getElementById('popupScannedQtyInput');
+      const amount = Math.max(0.001, parseFloat(qtyInput ? qtyInput.value : 1) || 1);
+
+      if (activePopupScanMode === 'add') {
+        item.quantity = Math.round((item.quantity + amount) * 1000) / 1000;
+        item.updatedAt = Date.now();
+        showToast(`تمت إضافة ${formatQuantity(amount)} ${item.unit} من "${item.name}" للأصناف`);
+      } else if (activePopupScanMode === 'consume') {
+        item.quantity = Math.max(0, Math.round((item.quantity - amount) * 1000) / 1000);
+        item.updatedAt = Date.now();
+        trackAnalyticsMetric(item.barcode || item.id, item.name, item.category, item.unit, 'consumed', amount);
+        showToast(`تم سحب ${formatQuantity(amount)} ${item.unit} من "${item.name}"`);
+      } else {
+        const existing = shoppingList.find(s => s.barcode === item.barcode);
+        if (existing) {
+          existing.neededQty = Math.round((existing.neededQty + amount) * 1000) / 1000;
+          existing.checked = false;
+          existing.updatedAt = Date.now();
+        } else {
+          shoppingList.unshift({
+            id: 'shop-' + Date.now(),
+            itemId: item.id,
+            barcode: item.barcode,
+            name: item.name,
+            category: item.category,
+            unit: item.unit,
+            neededQty: amount,
+            packInfo: item.packInfo || '',
+            checked: false,
+            updatedAt: Date.now()
+          });
+        }
+        showToast(`تمت إضافة ${formatQuantity(amount)} ${item.unit} من "${item.name}" لقائمة المقاضي`);
+      }
+
+      saveAppState();
+      updateSummaryStats();
+      renderInventoryView();
+      renderShoppingList();
+      renderScannedResultPanel(item.barcode);
+      closeScannedItemPopup();
+    }
+
+
+    // ============================================================================
+    // V3.0 DEEP AI EVERYWHERE ENGINE (Audit, Spelling, Semantic Search, Barcode AI)
+    // ============================================================================
+    function aiNormalizeArabicProductName(raw) {
+      let s = (raw || '').replace(/\s+/g, ' ').trim();
+      const fixes = [
+        [/^طماط$/g, 'طماطم'],
+        [/\bطماط\b/g, 'طماطم'],
+        [/\bبطاط\b/g, 'بطاطس'],
+        [/\bمكرونه\b/g, 'مكرونة'],
+        [/\bشعيريه\b/g, 'شعيرية'],
+        [/\bدجاجه\b/g, 'دجاجة'],
+        [/\bتونه\b/g, 'تونة'],
+        [/\bعلبه\b/g, 'علبة'],
+        [/\bكيلوا\b/g, 'كيلو'],
+        [/\bاوتماتيك\b/g, 'أوتوماتيك']
+      ];
+      fixes.forEach(([rx, rep]) => {
+        s = s.replace(rx, rep);
+      });
+      return s;
+    }
+
+    function aiSemanticSearchMatch(item, query) {
+      const q = (query || '').trim().toLowerCase();
+      if (!q) return false;
+      const semanticGroups = [
+        { triggers: ['فطور', 'عشاء', 'ساندوتش', 'خفيف'], match: /(بيض|جبن|حليب|لبن|فول|تونة|قشطة|شاي)/ },
+        { triggers: ['كبسة', 'غداء', 'طبخ', 'مقلوبة', 'مندي'], match: /(رز|دجاج|لحم|طماطم|بصل|معجون|بهار|زيت)/ },
+        { triggers: ['غسيل', 'تنظيف', 'نظافة', 'مطبخ', 'أرضيات'], match: /(فيري|تايد|اريال|كلور|مطهر|ديتول|صابون|مسحوق|سائل)/ },
+        { triggers: ['سلطة', 'خضار', 'طازج'], match: /(طماطم|خيار|بصل|بطاطس|نعناع|جرجير|بقدونس|ليمون|خس)/ },
+        { triggers: ['بروتين', 'دايت', 'رياضة', 'تمرين'], match: /(دجاج|صدور|بيض|تونة|حليب|لحم|شوفان)/ }
+      ];
+      const text = `${item.name} ${item.subType || ''} ${item.notes || ''}`;
+      for (const grp of semanticGroups) {
+        if (grp.triggers.some(t => t.includes(q) || q.includes(t))) {
+          if (grp.match.test(text)) return true;
+        }
+      }
+      return false;
+    }
+
+    function getAiScanAdviceForItem(item) {
+      if (!item) return '';
+      if (item.quantity <= 0) {
+        return `رصد الذكاء الاصطناعي أن "${item.name}" نفد تماماً (0 ${item.unit}) — يُنصح بإضافته لقائمة المقاضي أو إعادة تعبئته.`;
+      }
+      if (item.quantity <= item.minThreshold) {
+        return `تنبيه AI: الكمية المتبقية (${formatQuantity(item.quantity)} ${item.unit}) وصلت للحد الأدنى؛ يُقترح طلب ${formatQuantity(Math.max(item.minThreshold * 2 - item.quantity, item.step || 1))} ${item.unit}.`;
+      }
+      const learned = aiMemory.learnedBarcodes && aiMemory.learnedBarcodes[item.barcode];
+      if (learned && learned.hits > 1) {
+        return `ذاكرة AI: تم مسح هذا الصنف ${learned.hits} مرات سابقاً — متوفر حالياً بكمية كافية.`;
+      }
+      return `تدقيق AI: الصنف مصنف تحت "${CATEGORIES[item.category] ? CATEGORIES[item.category].name : ''}" بوحدة (${item.unit}).`;
+    }
+
+    function autoInferCategorySettingsByAi(catName) {
+      const t = (catName || '').trim();
+      if (!t) return;
+      const unitEl = document.getElementById('catFormUnit');
+      const colorEl = document.getElementById('catFormColor');
+      const iconEl = document.getElementById('catFormIcon');
+      const subEl = document.getElementById('catFormSubtitle');
+      if (!unitEl || !colorEl || !iconEl) return;
+
+      if (/(عصير|مشروب|ماء|موية|قهوة|شاي|حليب)/.test(t)) {
+        unitEl.value = 'لتر';
+        colorEl.value = 'cyan';
+        iconEl.value = 'coffee';
+        if (subEl && !subEl.value) subEl.value = 'باللتر أو الحبة';
+      } else if (/(خبز|مخبوز|حلى|حلويات|كيك|بسكويت)/.test(t)) {
+        unitEl.value = 'حبة';
+        colorEl.value = 'amber';
+        iconEl.value = 'cookie';
+        if (subEl && !subEl.value) subEl.value = 'بالحبة أو الكيس';
+      } else if (/(خضار|فواكه|ورقيات|فواكة)/.test(t)) {
+        unitEl.value = 'كجم';
+        colorEl.value = 'emerald';
+        iconEl.value = 'carrot';
+        if (subEl && !subEl.value) subEl.value = 'بالكيلو أو الربطة';
+      } else if (/(دجاج|لحم|سمك|بيض|مشويات)/.test(t)) {
+        unitEl.value = 'صحن';
+        colorEl.value = 'amber';
+        iconEl.value = 'drumstick';
+        if (subEl && !subEl.value) subEl.value = 'بالصحن أو الكيلو أو الطبق';
+      } else if (/(منظف|تنظيف|غسيل|صابون)/.test(t)) {
+        unitEl.value = 'لتر';
+        colorEl.value = 'purple';
+        iconEl.value = 'sparkles';
+        if (subEl && !subEl.value) subEl.value = 'السائل باللتر والبودرة بالكيلو';
+      }
+    }
+
+    function updateAiHomeAuditBanner() {
+      const el = document.getElementById('aiHomeAuditText');
+      if (!el) return;
+      if (inventory.length === 0) {
+        el.textContent = 'الذكاء الاصطناعي جاهز: اكتب مقاضيك بالأعلى أو امسح أي باركود وسيتولى التصنيف والتدقيق وحفظ الخبرات تلقائياً.';
+        return;
+      }
+      const lowItems = inventory.filter(i => i.quantity <= i.minThreshold);
+      const outItems = inventory.filter(i => i.quantity <= 0);
+      const learnedCount = Object.keys(aiMemory.learnedBarcodes || {}).length;
+      if (outItems.length > 0) {
+        el.textContent = `تدقيق AI: يوجد ${outItems.length} أصناف نفدت تماماً (${outItems.slice(0, 2).map(x => x.name).join('، ')}) و${lowItems.length} نواقص إجمالاً — متعلم ${learnedCount} باركود.`;
+      } else if (lowItems.length > 0) {
+        el.textContent = `تدقيق AI: مخزونك منظم (${inventory.length} أصناف)، وهناك ${lowItems.length} أصناف قاربت على النفاد يُنصح بتحويلها للمقاضي.`;
+      } else {
+        el.textContent = `تدقيق AI ممتاز: جميع الأصناف (${inventory.length}) متوفرة ومصنفة بوحداتها الصحيحة ومتعلم ${learnedCount} باركود في الذاكرة.`;
+      }
+    }
+
+    function runFullAiAuditAndFixAll() {
+      let fixedCount = 0;
+      inventory.forEach(item => {
+        const cleanName = aiNormalizeArabicProductName(item.name);
+        if (cleanName !== item.name) {
+          item.name = cleanName;
+          item.updatedAt = Date.now();
+          fixedCount++;
+        }
+        // Train the AI on the user's actual category and unit choices (never override the user's chosen category!)
+        learnBarcodePattern(item.barcode, item.name, item.category, item.unit, item);
+      });
+      saveAppState();
+      updateSummaryStats();
+      updateAiHomeAuditBanner();
+      renderInventoryView();
+      renderShoppingList();
+      renderBarcodeLabelsCatalog();
+      showToast(fixedCount > 0 ? `تم تدقيق وتصحيح ${fixedCount} تفاصيل في الأصناف بالذكاء الاصطناعي!` : 'تم فحص جميع الأصناف — كل الأسماء والتصنيفات دقيقة ومرتبة!');
+    }
+
+    function aiAuditAndSortShoppingList() {
+      if (shoppingList.length === 0) {
+        showToast('قائمة المقاضي فارغة حالياً');
+        return;
+      }
+      const aisleOrder = ['veg', 'dairy', 'meat', 'canned', 'rice_pasta', 'spices', 'frozen', 'cleaning'];
+      shoppingList.forEach(entry => {
+        entry.name = aiNormalizeArabicProductName(entry.name);
+        const inferred = classifyArabicGroceryTextLocal(entry.name);
+        if (inferred && !CATEGORIES[entry.category]) {
+          entry.category = inferred.category;
+        }
+      });
+      shoppingList.sort((a, b) => {
+        const ia = aisleOrder.indexOf(a.category);
+        const ib = aisleOrder.indexOf(b.category);
+        return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+      });
+      saveAppState();
+      renderShoppingList();
+      showToast('تم تدقيق وترتيب قائمة المقاضي حسب ممرات السوبرماركت بالذكاء الاصطناعي!');
+    }
+
+
+    // ============================================================================
+    // V3.1 AI ANALYTICS TRACKER & VISUAL DASHBOARD (Synced with Firebase)
+    // ============================================================================
+    const STORAGE_KEY_ANALYTICS = 'maqadina_analytics_v1';
+    let analyticsStats = {}; // keyed by barcode or name
+
+    function loadAnalyticsStats() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY_ANALYTICS);
+        if (raw) analyticsStats = JSON.parse(raw) || {};
+      } catch (e) {
+        analyticsStats = {};
+      }
+    }
+
+    function saveAnalyticsStats() {
+      try {
+        localStorage.setItem(STORAGE_KEY_ANALYTICS, JSON.stringify(analyticsStats));
+      } catch (e) {}
+    }
+
+    function trackAnalyticsMetric(keyId, name, category, unit, metricType, qtyAmount) {
+      const key = String(keyId || name || '').trim();
+      if (!key) return;
+      if (!analyticsStats[key]) {
+        analyticsStats[key] = {
+          key,
+          name: name || 'صنف',
+          category: category || 'canned',
+          unit: unit || 'حبة',
+          consumedCount: 0,
+          consumedQty: 0,
+          orderedCount: 0,
+          orderedQty: 0,
+          purchasedCount: 0,
+          purchasedQty: 0,
+          aiAddedCount: 0,
+          updatedAt: Date.now()
+        };
+      }
+      const rec = analyticsStats[key];
+      if (name) rec.name = name;
+      if (category) rec.category = category;
+      if (unit) rec.unit = unit;
+      const q = Number(qtyAmount) || 1;
+
+      if (metricType === 'consumed') {
+        rec.consumedCount = (rec.consumedCount || 0) + 1;
+        rec.consumedQty = Math.round(((rec.consumedQty || 0) + q) * 100) / 100;
+      } else if (metricType === 'ordered') {
+        rec.orderedCount = (rec.orderedCount || 0) + 1;
+        rec.orderedQty = Math.round(((rec.orderedQty || 0) + q) * 100) / 100;
+      } else if (metricType === 'purchased') {
+        rec.purchasedCount = (rec.purchasedCount || 0) + 1;
+        rec.purchasedQty = Math.round(((rec.purchasedQty || 0) + q) * 100) / 100;
+      } else if (metricType === 'aiAdded') {
+        rec.aiAddedCount = (rec.aiAddedCount || 0) + 1;
+      }
+      rec.updatedAt = Date.now();
+      saveAnalyticsStats();
+    }
+
+    function renderAnalyticsDashboard(showFeedback) {
+      const records = Object.values(analyticsStats || {});
+      const topConsumedEl = document.getElementById('anaTopConsumedName');
+      const topConsumedSubEl = document.getElementById('anaTopConsumedSub');
+      const topPurchasedEl = document.getElementById('anaTopPurchasedName');
+      const topPurchasedSubEl = document.getElementById('anaTopPurchasedSub');
+      const totalPurchasedEl = document.getElementById('anaTotalPurchasedCount');
+      const totalAiSubEl = document.getElementById('anaTotalAiCountSub');
+      const narrativeEl = document.getElementById('anaAiNarrativeText');
+      const consumedListEl = document.getElementById('anaConsumedList');
+      const purchasedListEl = document.getElementById('anaPurchasedList');
+      const catDistEl = document.getElementById('anaCategoryDistributionGrid');
+
+      const consumedSorted = records.filter(r => r.consumedCount > 0).sort((a, b) => (b.consumedCount - a.consumedCount) || (b.consumedQty - a.consumedQty));
+      const purchasedSorted = records.filter(r => (r.purchasedCount > 0 || r.orderedCount > 0)).sort((a, b) => (b.purchasedCount - a.purchasedCount) || (b.orderedCount - a.orderedCount));
+
+      const totalPurchasedOps = records.reduce((sum, r) => sum + (r.purchasedCount || 0), 0);
+      const aiCount = Math.max(
+        records.filter(r => r.aiAddedCount > 0).length,
+        Object.keys(aiMemory.learnedBarcodes || {}).length
+      );
+
+      if (consumedSorted.length > 0) {
+        const topC = consumedSorted[0];
+        if (topConsumedEl) topConsumedEl.textContent = topC.name;
+        if (topConsumedSubEl) topConsumedSubEl.textContent = `سُحب ${topC.consumedCount} مرات (إجمالي ${formatQuantity(topC.consumedQty)} ${topC.unit})`;
+      } else {
+        if (topConsumedEl) topConsumedEl.textContent = 'لا توجد عمليات سحب بعد';
+        if (topConsumedSubEl) topConsumedSubEl.textContent = 'استخدم زر (−) في الأصناف لحساب الاستهلاك';
+      }
+
+      if (purchasedSorted.length > 0) {
+        const topP = purchasedSorted[0];
+        if (topPurchasedEl) topPurchasedEl.textContent = topP.name;
+        if (topPurchasedSubEl) topPurchasedSubEl.textContent = `تم شراؤه (✓) ${topP.purchasedCount} مرات • طُلب ${topP.orderedCount} مرات`;
+      } else {
+        if (topPurchasedEl) topPurchasedEl.textContent = 'لا توجد مشتريات بعد';
+        if (topPurchasedSubEl) topPurchasedSubEl.textContent = 'يُحسب عند وضع صح (✓) في قائمة المقاضي';
+      }
+
+      if (totalPurchasedEl) totalPurchasedEl.textContent = totalPurchasedOps;
+      if (totalAiSubEl) totalAiSubEl.textContent = `${aiCount} أصناف مصنفة ومتعلمة بالـ AI`;
+
+      if (narrativeEl) {
+        if (consumedSorted.length === 0 && purchasedSorted.length === 0 && inventory.length === 0) {
+          narrativeEl.textContent = 'ابدأ بإضافة أصنافك أو مسح الباركود وسحب الكميات أو وضع صح (✓) على المقاضي المشتراة، وسيقوم الذكاء الاصطناعي بتحليل أكثر السلع استهلاكاً وطلباً تلقائياً.';
+        } else {
+          const topCName = consumedSorted[0] ? `"${consumedSorted[0].name}"` : 'غير محدد بعد';
+          const topPName = purchasedSorted[0] ? `"${purchasedSorted[0].name}"` : 'غير محدد بعد';
+          const lowCount = inventory.filter(i => i.quantity <= i.minThreshold).length;
+          narrativeEl.textContent = `تحليل جيمناي AI: أكثر صنف يُستهلك في منزلك هو ${topCName}، وأكثر صنف يُطلب ويُشترى عبر قائمة المقاضي هو ${topPName}. لديك حالياً ${inventory.length} أصناف مسجلة (${lowCount} منها وصل لحد التنبيه) و${aiCount} أنماط ذكاء محفوظة.`;
+        }
+      }
+
+      if (consumedListEl) {
+        if (consumedSorted.length === 0) {
+          consumedListEl.innerHTML = '<p class="text-xs text-slate-400 text-center py-6">لا توجد بيانات استهلاك مسجلة بعد.</p>';
+        } else {
+          const maxC = consumedSorted[0].consumedCount || 1;
+          consumedListEl.innerHTML = consumedSorted.slice(0, 6).map((r, idx) => {
+            const pct = Math.max(12, Math.round((r.consumedCount / maxC) * 100));
+            return `
+              <div class="space-y-1">
+                <div class="flex items-center justify-between text-xs">
+                  <span class="font-bold text-white">${idx + 1}. ${r.name}</span>
+                  <span class="text-rose-300 font-bold">${r.consumedCount} مرات (${formatQuantity(r.consumedQty)} ${r.unit})</span>
+                </div>
+                <div class="w-full h-2 rounded-full bg-slate-900 overflow-hidden">
+                  <div class="h-full rounded-full bg-gradient-to-l from-rose-500 to-amber-500" style="width:${pct}%"></div>
+                </div>
+              </div>
+            `;
+          }).join('');
+        }
+      }
+
+      if (purchasedListEl) {
+        if (purchasedSorted.length === 0) {
+          purchasedListEl.innerHTML = '<p class="text-xs text-slate-400 text-center py-6">اضغط علامة صح (✓) على أي صنف في المقاضي ليظهر هنا.</p>';
+        } else {
+          const maxP = Math.max(...purchasedSorted.map(x => Math.max(x.purchasedCount || 0, x.orderedCount || 0, 1)));
+          purchasedListEl.innerHTML = purchasedSorted.slice(0, 6).map((r, idx) => {
+            const score = Math.max(r.purchasedCount || 0, r.orderedCount || 0);
+            const pct = Math.max(12, Math.round((score / maxP) * 100));
+            return `
+              <div class="space-y-1">
+                <div class="flex items-center justify-between text-xs">
+                  <span class="font-bold text-white">${idx + 1}. ${r.name}</span>
+                  <span class="text-emerald-300 font-bold">تم شراؤه ✓ ${r.purchasedCount} • طُلب ${r.orderedCount}</span>
+                </div>
+                <div class="w-full h-2 rounded-full bg-slate-900 overflow-hidden">
+                  <div class="h-full rounded-full bg-gradient-to-l from-emerald-500 to-teal-400" style="width:${pct}%"></div>
+                </div>
+              </div>
+            `;
+          }).join('');
+        }
+      }
+
+      if (catDistEl) {
+        const cats = Object.values(CATEGORIES).filter(c => c.id !== 'all');
+        const totalInv = Math.max(1, inventory.length);
+        catDistEl.innerHTML = cats.map(c => {
+          const count = inventory.filter(i => i.category === c.id).length;
+          const pct = Math.round((count / totalInv) * 100);
+          return `
+            <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800 space-y-1.5">
+              <div class="flex items-center justify-between text-xs">
+                <span class="font-bold text-white truncate">${c.name}</span>
+                <span class="text-purple-300 font-black">${count}</span>
+              </div>
+              <div class="w-full h-1.5 rounded-full bg-slate-950 overflow-hidden">
+                <div class="h-full rounded-full bg-purple-500" style="width:${count > 0 ? Math.max(8, pct) : 0}%"></div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      if (window.lucide) lucide.createIcons();
+      if (showFeedback) showToast('تم تحديث لوحة التحليل الذكي!');
+    }
+
+
+    // Prevent ghost click-through when closing any popup modal by tapping outside .glass-modal
+    let lastBackdropTouchStartedOutside = false;
+    document.addEventListener('pointerdown', (e) => {
+      const openBackdrop = e.target.closest('.fixed.inset-0.z-50');
+      lastBackdropTouchStartedOutside = Boolean(openBackdrop && !openBackdrop.classList.contains('hidden') && !e.target.closest('.glass-modal'));
+    });
+
     window.addEventListener('DOMContentLoaded', () => {
       try { history.replaceState({ appRoute: 'root' }, '', '#/home'); history.pushState({ appRoute: 'anchor' }, '', '#/home'); } catch (e) {}
       initDynamicPwaManifestAndIcons();
+      loadAnalyticsStats();
       loadAiMemory();
       loadAppState();
+      syncAiMemoryFromUserInventory();
+      syncCategorySelectDropdowns();
+      setupUniversalModalBackdropClose();
       initFirebaseSmartSync();
       updateSummaryStats();
       renderInventoryView();
