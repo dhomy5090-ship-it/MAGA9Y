@@ -12,7 +12,7 @@
   <link id="pwaIconLink" rel="icon" type="image/png" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%2310b981'/%3E%3Cstop offset='100%25' stop-color='%230d9488'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='128' height='128' rx='28' fill='url(%23g)'/%3E%3Cpath d='M36 42V36H46M92 42V36H82M36 86V92H46M92 86V92H82M48 48V80M60 48V80M70 48V80M82 48V80' stroke='white' stroke-width='7' stroke-linecap='round' fill='none'/%3E%3C/svg%3E" />
   <link id="pwaAppleTouchIcon" rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%2310b981'/%3E%3Cstop offset='100%25' stop-color='%230d9488'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='128' height='128' rx='28' fill='url(%23g)'/%3E%3Cpath d='M36 42V36H46M92 42V36H82M36 86V92H46M92 86V92H82M48 48V80M60 48V80M70 48V80M82 48V80' stroke='white' stroke-width='7' stroke-linecap='round' fill='none'/%3E%3C/svg%3E" />
   <link id="pwaManifestLink" rel="manifest" href="data:application/manifest+json,{}" />
-  <title>مقاضينا الذكي V3.6 | نظام إدارة الأصناف والباركود والتحليل الذكي</title>
+  <title>مقاضينا الذكي V3.8 | نظام إدارة الأصناف والباركود والتحليل الذكي</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
@@ -204,7 +204,7 @@
               <div class="min-w-0">
                 <div class="flex items-center gap-1.5">
                   <h1 class="text-base sm:text-xl font-extrabold tracking-tight text-white whitespace-nowrap">مقاضينا الذكي</h1>
-                  <span id="appVersionBadge" class="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-300 border border-sky-500/30 font-mono font-extrabold shrink-0">V3.6</span>
+                  <span id="appVersionBadge" class="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-300 border border-sky-500/30 font-mono font-extrabold shrink-0">V3.8</span>
                 </div>
                 <p class="text-[10px] sm:text-xs text-slate-400 truncate">إدارة الأصناف وقائمة الطلبات بالباركود</p>
               </div>
@@ -1067,7 +1067,7 @@
             <i data-lucide="brain-circuit" class="w-5 h-5"></i>
           </div>
           <div>
-            <h3 class="text-sm sm:text-base font-extrabold text-white">مركز ذكاء جيمناي والتعلم الذاتي (AI V3.6)</h3>
+            <h3 class="text-sm sm:text-base font-extrabold text-white">مركز ذكاء جيمناي والتعلم الذاتي (AI V3.8)</h3>
             <p class="text-[11px] text-slate-400">يتعلم من مقاضيك وباركوداتك ويطور دقة التصنيف والترتيب تلقائياً</p>
           </div>
         </div>
@@ -1132,7 +1132,7 @@
             <i data-lucide="cloud" class="w-5 h-5"></i>
           </div>
           <div>
-            <h3 class="text-sm sm:text-base font-extrabold text-white">حالة السحابة (Firebase V3.6)</h3>
+            <h3 class="text-sm sm:text-base font-extrabold text-white">حالة السحابة (Firebase V3.8)</h3>
             <p class="text-[11px] text-slate-400">فحص جاهزية الربط والمزامنة التلقائية بين الجوال والكمبيوتر</p>
           </div>
         </div>
@@ -1574,10 +1574,24 @@
     }
 
     function switchMainTab(tab, skipHistory) {
+      if (typeof closeAnyOpenModal === 'function') closeAnyOpenModal();
+      // If user taps 'الأصناف' while inside an opened category (e.g. 'كل المقاضي'), return to the main Categories Grid!
+      if (tab === 'inventory' && isInventoryBoxOpened) {
+        isInventoryBoxOpened = false;
+        selectedCategory = 'all';
+      }
+      if (tab === 'home') {
+        isInventoryBoxOpened = false;
+        selectedCategory = 'all';
+      }
+      if (tab === 'labels') {
+        labelsFilterCategory = 'all';
+      }
       if (!skipHistory && tab !== currentTab) {
         pushInternalAppHistory('tab-' + tab);
       }
       currentTab = tab;
+      try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) {}
       const tabs = ['home', 'inventory', 'scanner', 'shopping', 'labels', 'analytics'];
       tabs.forEach(t => {
         const view = document.getElementById('view-' + t);
@@ -1961,29 +1975,9 @@
     function quickAddItemToShopping(itemId) {
       const item = inventory.find(i => i.id === itemId);
       if (!item) return;
-      const existing = shoppingList.find(s => s.barcode === item.barcode);
-      const defaultAdd = item.unit === 'كجم' || item.unit === 'لتر' ? 1.5 : 2;
-      if (existing) {
-        existing.neededQty = Math.round((existing.neededQty + (item.step || 1)) * 100) / 100;
-        existing.checked = false;
-      } else {
-        shoppingList.unshift({
-          id: 'shop-' + Date.now(),
-          itemId: item.id,
-          barcode: item.barcode,
-          name: item.name,
-          category: item.category,
-          unit: item.unit,
-          neededQty: Math.max(defaultAdd, item.minThreshold),
-          packInfo: item.packInfo || '',
-          checked: false,
-          updatedAt: Date.now()
-        });
-      }
-      saveAppState();
-      updateSummaryStats();
-      trackAnalyticsMetric(item.barcode || item.id, item.name, item.category, item.unit, 'ordered', amount);
-      showToast(`تمت إضافة "${item.name}" إلى قائمة المقاضي`);
+      // Stay in the same list and let the user choose the exact custom quantity in the popup!
+      scanActionMode = 'shop';
+      openScannedItemPopup(item);
     }
 
     function autoSyncLowStockToShopping() {
@@ -2037,9 +2031,16 @@
     }
 
     function simulateScanFromCard(barcode) {
-      lastScannedBarcode = barcode;
-      switchMainTab('scanner');
-      triggerBarcodeScan(barcode);
+      const clean = String(barcode || '').trim();
+      if (!clean) return;
+      lastScannedBarcode = clean;
+      const item = inventory.find(i => i.barcode === clean);
+      if (item) {
+        // Stay right inside the current list/page and open the quick quantity/action popup!
+        openScannedItemPopup(item);
+      } else {
+        openUnknownProductPrompt(clean);
+      }
     }
 
     let pendingUnknownBarcode = '';
@@ -2346,76 +2347,138 @@
         }
 
         if (videoEl) {
+          videoEl.muted = true;
+          videoEl.playsInline = true;
+          videoEl.setAttribute('playsinline', '');
+          videoEl.setAttribute('webkit-playsinline', '');
+          videoEl.setAttribute('muted', '');
           videoEl.srcObject = stream;
-          videoEl.setAttribute('playsinline', 'true');
           videoEl.classList.remove('hidden');
           await videoEl.play();
         }
 
-        // High-speed dual engine: Native BarcodeDetector + ZXing TRY_HARDER on cropped center region (reads paper & screen barcodes in <150ms)
+        // Universal Cross-Platform Engine (iPhone iOS Safari/PWA + Android Chrome + PC)
         const scanCanvas = document.createElement('canvas');
         scanCanvas.width = 640;
-        scanCanvas.height = 360;
+        scanCanvas.height = 480;
         const scanCtx = scanCanvas.getContext('2d', { willReadFrequently: true });
+
         let detector = null;
         if ('BarcodeDetector' in window) {
           try {
             detector = new BarcodeDetector({
               formats: ['code_128', 'ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_39', 'itf', 'qr_code', 'codabar']
             });
-          } catch (e) {}
+          } catch (e) {
+            detector = null;
+          }
         }
 
-        let zxingReader = null;
-        if (window.ZXing && window.ZXing.BrowserMultiFormatReader) {
+        // Direct ZXing MultiFormatReader using HTMLCanvasElementLuminanceSource (works 100% on iPhone iOS!)
+        let zxingMultiReader = null;
+        if (window.ZXing && window.ZXing.MultiFormatReader && window.ZXing.HTMLCanvasElementLuminanceSource) {
           try {
             const hints = new Map();
             if (window.ZXing.DecodeHintType) {
               hints.set(window.ZXing.DecodeHintType.TRY_HARDER, true);
+              if (window.ZXing.BarcodeFormat) {
+                hints.set(window.ZXing.DecodeHintType.POSSIBLE_FORMATS, [
+                  window.ZXing.BarcodeFormat.CODE_128,
+                  window.ZXing.BarcodeFormat.EAN_13,
+                  window.ZXing.BarcodeFormat.EAN_8,
+                  window.ZXing.BarcodeFormat.UPC_A,
+                  window.ZXing.BarcodeFormat.UPC_E,
+                  window.ZXing.BarcodeFormat.CODE_39,
+                  window.ZXing.BarcodeFormat.ITF,
+                  window.ZXing.BarcodeFormat.QR_CODE,
+                  window.ZXing.BarcodeFormat.CODABAR
+                ]);
+              }
             }
-            zxingReader = new window.ZXing.BrowserMultiFormatReader(hints);
+            zxingMultiReader = new window.ZXing.MultiFormatReader();
+            zxingMultiReader.setHints(hints);
           } catch (e) {
-            zxingReader = new window.ZXing.BrowserMultiFormatReader();
+            zxingMultiReader = null;
           }
         }
 
-        let isScanTickBusy = false;
-        nativeScanInterval = setInterval(async () => {
-          if (!isCameraActive || isScanTickBusy || !videoEl || videoEl.readyState < 2) return;
-          isScanTickBusy = true;
+        // Secondary ZXing BrowserMultiFormatReader fallback if needed
+        let zxingBrowserReader = null;
+        if (!zxingMultiReader && window.ZXing && window.ZXing.BrowserMultiFormatReader) {
           try {
+            zxingBrowserReader = new window.ZXing.BrowserMultiFormatReader();
+          } catch (e) {}
+        }
+
+        let isScanTickBusy = false;
+        let tickParity = 0;
+        nativeScanInterval = setInterval(async () => {
+          if (!isCameraActive || isScanTickBusy || !videoEl || videoEl.readyState < 2 || !videoEl.videoWidth) return;
+          isScanTickBusy = true;
+          tickParity++;
+          try {
+            // 1. Hardware BarcodeDetector (Android Chrome / Desktop Edge/Chrome)
             if (detector) {
-              const directHits = await detector.detect(videoEl);
-              if (directHits && directHits.length > 0 && directHits[0].rawValue) {
-                onLiveBarcodeDetected(directHits[0].rawValue);
-                return;
-              }
+              try {
+                const directHits = await detector.detect(videoEl);
+                if (directHits && directHits.length > 0 && directHits[0].rawValue) {
+                  onLiveBarcodeDetected(directHits[0].rawValue);
+                  return;
+                }
+              } catch (e) {}
             }
-            const vw = videoEl.videoWidth || 640;
-            const vh = videoEl.videoHeight || 480;
-            const sx = Math.max(0, (vw - 640) / 2);
-            const sy = Math.max(0, (vh - 360) / 2);
-            scanCtx.drawImage(videoEl, sx, sy, Math.min(vw, 640), Math.min(vh, 360), 0, 0, 640, 360);
+
+            // 2. Full-frame proportional scale to 640px wide (NO tight crop! Guarantees iPhone reads full view)
+            const vw = videoEl.videoWidth;
+            const vh = videoEl.videoHeight;
+            const targetW = 720;
+            const targetH = Math.max(360, Math.round((vh / vw) * targetW));
+            if (scanCanvas.width !== targetW || scanCanvas.height !== targetH) {
+              scanCanvas.width = targetW;
+              scanCanvas.height = targetH;
+            }
+            scanCtx.filter = (tickParity % 2 === 0) ? 'contrast(1.35) grayscale(1)' : 'none';
+            scanCtx.drawImage(videoEl, 0, 0, targetW, targetH);
+            scanCtx.filter = 'none';
 
             if (detector) {
-              const enhancedHits = await detector.detect(scanCanvas);
-              if (enhancedHits && enhancedHits.length > 0 && enhancedHits[0].rawValue) {
-                onLiveBarcodeDetected(enhancedHits[0].rawValue);
-                return;
-              }
+              try {
+                const canvasHits = await detector.detect(scanCanvas);
+                if (canvasHits && canvasHits.length > 0 && canvasHits[0].rawValue) {
+                  onLiveBarcodeDetected(canvasHits[0].rawValue);
+                  return;
+                }
+              } catch (e) {}
             }
-            if (zxingReader && zxingReader.decodeFromCanvas) {
-              const res = zxingReader.decodeFromCanvas(scanCanvas);
-              if (res && res.text) {
-                onLiveBarcodeDetected(res.text);
-                return;
+
+            // 3. Universal ZXing Canvas LuminanceSource Decoder (Works on iPhone iOS Safari, iOS PWA, Android & PC!)
+            if (zxingMultiReader && window.ZXing.HTMLCanvasElementLuminanceSource && window.ZXing.HybridBinarizer && window.ZXing.BinaryBitmap) {
+              try {
+                const lum = new window.ZXing.HTMLCanvasElementLuminanceSource(scanCanvas);
+                const bmp = new window.ZXing.BinaryBitmap(new window.ZXing.HybridBinarizer(lum));
+                const res = zxingMultiReader.decode(bmp);
+                if (res && (res.getText ? res.getText() : res.text)) {
+                  onLiveBarcodeDetected(res.getText ? res.getText() : res.text);
+                  return;
+                }
+              } catch (e) {
+                // NotFoundException on empty frames is normal
               }
+            } else if (zxingBrowserReader && zxingBrowserReader.decodeFromImageUrl) {
+              try {
+                const dataUrl = scanCanvas.toDataURL('image/jpeg', 0.7);
+                const res = await zxingBrowserReader.decodeFromImageUrl(dataUrl);
+                if (res && res.text) {
+                  onLiveBarcodeDetected(res.text);
+                  return;
+                }
+              } catch (e) {}
             }
           } catch (e) {
           } finally {
             isScanTickBusy = false;
           }
-        }, 200);
+        }, 180);
       } catch (err) {
         stopCameraScanner();
         showCameraNotice('تعذر تشغيل الكاميرا داخل نافذة المعاينة الحالية لأن النظام يمنع الوصول للكاميرا في وضع المعاينة. عند تشغيل التطبيق مباشرة في متصفح جوالك عبر HTTPS ستفتح الكاميرا وتقرأ الباركود تلقائياً مثل أجهزة المتاجر.');
